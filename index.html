@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-Renja Bapperida - Smart Template Studio Live System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Bookman+Old+Style&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .font-bookman { font-family: 'Bookman Old Style', serif; }
+        .paper-f4 {
+            width: 215mm;
+            min-height: 330mm;
+            padding: 20mm;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            background: #ffffff;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col" x-data="{ 
+    currentTab: 'review', 
+    userRole: 'bapperida', 
+    loginUsername: 'verifikator',
+    loginPassword: 'password',
+    activeRibbon: 'utama', 
+    selectedTemplate: 'RENJA', 
+    selectedReviewDoc: 'Dinas Kesehatan - Dokumen RKPD 2027',
+    selectedOpd: 'Kecamatan Losari (LAMPIRAN LIII)', 
+    showAddModal: false,
+    showMasterOpdModal: false,
+    tableSelected: false,
+    reviewDecisionStatus: 'pending'
+}">
+
+    <!-- Top Master Navbar -->
+    <header class="bg-slate-950 border-b border-slate-800 text-white px-6 py-2.5 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 bg-emerald-500 rounded-xl flex items-center justify-center text-slate-950 font-extrabold shadow-lg shadow-emerald-500/20">
+                <i class="fa-solid fa-shield-halved text-lg"></i>
+            </div>
+            <div>
+                <h1 class="text-sm font-extrabold tracking-tight text-white flex items-center gap-2">
+                    <span>e-Renja Bapperida Studio</span>
+                    <span class="bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[10px] px-2 py-0.5 rounded-md font-bold uppercase" x-text="userRole === 'admin' ? 'Mode Super Admin' : (userRole === 'bapperida' ? 'Mode Verifikator Bapperida' : 'Mode Operator OPD')"></span>
+                </h1>
+                <p class="text-[10px] text-slate-400 font-semibold">Pemerintah Kabupaten Cirebon • Standard F4 (215 x 330 mm)</p>
+            </div>
+        </div>
+
+        <!-- Role Switcher -->
+        <div class="flex items-center space-x-3 text-xs">
+            <span class="text-slate-400 font-semibold hidden md:inline">Status Login:</span>
+            <select x-model="userRole" @change="if(userRole === 'admin') { currentTab = 'master'; } else if(userRole === 'bapperida') { currentTab = 'review'; } else { currentTab = 'editor'; }" class="bg-slate-900 border border-slate-700 text-emerald-400 font-bold px-3 py-1.5 rounded-xl">
+                <option value="admin">🔑 Administrator Bapperida (Super Admin)</option>
+                <option value="bapperida">🔍 Tim Verifikator Perencana Bapperida</option>
+                <option value="opd">🏢 Operator Perangkat Daerah (OPD)</option>
+            </select>
+        </div>
+    </header>
+
+    <!-- Sub-Navbar Module Navigation Tabs -->
+    <nav class="bg-slate-950/90 border-b border-slate-800 px-6 py-2 flex items-center space-x-2 overflow-x-auto text-xs scrollbar-none">
+        <button @click="currentTab = 'dashboard'" :class="currentTab === 'dashboard' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-300 hover:bg-slate-800'" class="px-3.5 py-2 rounded-xl transition flex items-center space-x-2 shrink-0">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>1. Dashboard</span>
+        </button>
+        <button @click="currentTab = 'editor'" :class="currentTab === 'editor' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-300 hover:bg-slate-800'" class="px-3.5 py-2 rounded-xl transition flex items-center space-x-2 shrink-0">
+            <i class="fa-solid fa-file-signature"></i>
+            <span>2. Smart Editor F4</span>
+        </button>
+        <button @click="currentTab = 'formatter'" :class="currentTab === 'formatter' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-300 hover:bg-slate-800'" class="px-3.5 py-2 rounded-xl transition flex items-center space-x-2 shrink-0">
+            <i class="fa-solid fa-soap"></i>
+            <span>3. Mesin Cuci Dokumen</span>
+        </button>
+        <button @click="currentTab = 'templates'" :class="currentTab === 'templates' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-300 hover:bg-slate-800'" class="px-3.5 py-2 rounded-xl transition flex items-center space-x-2 shrink-0">
+            <i class="fa-solid fa-cubes"></i>
+            <span>4. Smart Template Manager</span>
+        </button>
+        <button @click="currentTab = 'review'" :class="currentTab === 'review' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-300 hover:bg-slate-800'" class="px-3.5 py-2 rounded-xl transition flex items-center space-x-2 shrink-0">
+            <i class="fa-solid fa-user-check"></i>
+            <span>5. Review & Verifikasi Semua Dokumen</span>
+        </button>
+        <button @click="currentTab = 'monitoring'" :class="currentTab === 'monitoring' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-300 hover:bg-slate-800'" class="px-3.5 py-2 rounded-xl transition flex items-center space-x-2 shrink-0">
+            <i class="fa-solid fa-desktop"></i>
+            <span>6. Monitoring 71 OPD</span>
+        </button>
+        <button @click="currentTab = 'master'" :class="currentTab === 'master' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-300 hover:bg-slate-800'" class="px-3.5 py-2 rounded-xl transition flex items-center space-x-2 shrink-0">
+            <i class="fa-solid fa-database"></i>
+            <span>7. Master OPD & Nomenklatur (Admin)</span>
+        </button>
+        <button @click="currentTab = 'login'" :class="currentTab === 'login' ? 'bg-emerald-500 text-slate-950 font-bold' : 'bg-slate-900 text-slate-300 hover:bg-slate-800'" class="px-3.5 py-2 rounded-xl transition flex items-center space-x-2 shrink-0 ml-auto">
+            <i class="fa-solid fa-key"></i>
+            <span>8. Kredensial Login Admin</span>
+        </button>
+    </nav>
+
+    <!-- MODULE 1: DASHBOARD UTAMA -->
+    <main class="flex-1 p-6 max-w-7xl mx-auto w-full space-y-6" x-show="currentTab === 'dashboard'">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-2xl font-extrabold text-white">Dashboard Dokumen Perencanaan</h2>
+                <p class="text-xs text-slate-400">Ringkasan status penyusunan Renja, RKPD, dan dokumen perencanaan 71 Perangkat Daerah.</p>
+            </div>
+            <div class="flex space-x-2 text-xs">
+                <button @click="currentTab = 'editor'" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-2 rounded-xl flex items-center space-x-2 shadow-lg shadow-emerald-500/20">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>Buat Dokumen Renja Baru</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-slate-800/80 border border-slate-700/80 p-5 rounded-2xl space-y-2">
+                <div class="text-xs text-slate-400 font-bold uppercase">Total OPD Terdaftar</div>
+                <div class="text-3xl font-extrabold text-white">71 <span class="text-xs text-emerald-400 font-normal">Perangkat Daerah</span></div>
+                <div class="text-[11px] text-slate-400">31 Dinas/Badan & 40 Kecamatan</div>
+            </div>
+
+            <div class="bg-slate-800/80 border border-slate-700/80 p-5 rounded-2xl space-y-2">
+                <div class="text-xs text-slate-400 font-bold uppercase">Dokumen Disetujui (Approved)</div>
+                <div class="text-3xl font-extrabold text-emerald-400">58 <span class="text-xs font-normal">Dokumen</span></div>
+                <div class="text-[11px] text-emerald-400/80">Telah Diverifikasi Bapperida</div>
+            </div>
+
+            <div class="bg-slate-800/80 border border-slate-700/80 p-5 rounded-2xl space-y-2">
+                <div class="text-xs text-slate-400 font-bold uppercase">Dalam Review Bapperida</div>
+                <div class="text-3xl font-extrabold text-amber-400">9 <span class="text-xs font-normal">Dokumen</span></div>
+                <div class="text-[11px] text-amber-400/80">Sedang Ditelaah Tim Perencana</div>
+            </div>
+
+            <div class="bg-slate-800/80 border border-slate-700/80 p-5 rounded-2xl space-y-2">
+                <div class="text-xs text-slate-400 font-bold uppercase">Draft / Dalam Proses</div>
+                <div class="text-3xl font-extrabold text-cyan-400">4 <span class="text-xs font-normal">Dokumen</span></div>
+                <div class="text-[11px] text-cyan-400/80">Sedang Diisi oleh OPD</div>
+            </div>
+        </div>
+
+        <!-- Recent Documents Table -->
+        <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-extrabold text-white">Dokumen Perencanaan Terbaru (71 OPD)</h3>
+                <span class="text-xs text-slate-400">Tahun Anggaran 2027</span>
+            </div>
+            <div class="overflow-x-auto text-xs">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-700 text-slate-400 font-bold uppercase">
+                            <th class="py-3 px-4">Lampiran</th>
+                            <th class="py-3 px-4">Perangkat Daerah</th>
+                            <th class="py-3 px-4">Jenis Template</th>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4">Aksi Modul</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/60 text-slate-200">
+                        <tr>
+                            <td class="py-3 px-4 font-bold text-amber-400">LAMPIRAN LIII</td>
+                            <td class="py-3 px-4 font-bold">Kecamatan Losari</td>
+                            <td class="py-3 px-4"><span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-bold">RENJA</span></td>
+                            <td class="py-3 px-4"><span class="bg-emerald-500 text-slate-950 font-bold px-2 py-0.5 rounded text-[10px]">DISETUJUI</span></td>
+                            <td class="py-3 px-4">
+                                <button @click="currentTab = 'editor'" class="bg-slate-700 hover:bg-slate-600 px-2.5 py-1 rounded text-white font-bold">Buka Editor F4</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 font-bold text-amber-400">LAMPIRAN IV</td>
+                            <td class="py-3 px-4 font-bold">Dinas Pendidikan</td>
+                            <td class="py-3 px-4"><span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-bold">RENJA</span></td>
+                            <td class="py-3 px-4"><span class="bg-amber-500 text-slate-950 font-bold px-2 py-0.5 rounded text-[10px]">REVIEW BAPPERIDA</span></td>
+                            <td class="py-3 px-4">
+                                <button @click="currentTab = 'review'; selectedReviewDoc = 'Dinas Pendidikan - Renja 2027'" class="bg-amber-600 hover:bg-amber-500 px-2.5 py-1 rounded text-white font-bold">Review Catatan</button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="py-3 px-4 font-bold text-amber-400">LAMPIRAN V</td>
+                            <td class="py-3 px-4 font-bold">Dinas Kesehatan</td>
+                            <td class="py-3 px-4"><span class="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded font-bold">RKPD</span></td>
+                            <td class="py-3 px-4"><span class="bg-slate-600 text-slate-200 font-bold px-2 py-0.5 rounded text-[10px]">DRAFT</span></td>
+                            <td class="py-3 px-4">
+                                <button @click="currentTab = 'review'; selectedReviewDoc = 'Dinas Kesehatan - Dokumen RKPD 2027'" class="bg-blue-600 hover:bg-blue-500 px-2.5 py-1 rounded text-white font-bold">Verifikasi RKPD</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODULE 2: SMART EDITOR F4 -->
+    <main class="flex-1 flex flex-col" x-show="currentTab === 'editor'">
+        <!-- MS Word Style Ribbon Strip -->
+        <div class="bg-slate-800 border-b border-slate-700 px-6 py-2 text-xs">
+            <div class="flex items-center space-x-4 mb-2 border-b border-slate-700/60 pb-1.5">
+                <button @click="activeRibbon = 'utama'" :class="activeRibbon === 'utama' ? 'text-emerald-400 border-b-2 border-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'" class="pb-1 font-semibold">
+                    Utama (Home)
+                </button>
+                <button @click="activeRibbon = 'layout_tabel'" :class="activeRibbon === 'layout_tabel' ? 'text-emerald-400 border-b-2 border-emerald-400 font-bold' : 'text-slate-400 hover:text-slate-200'" class="pb-1 font-semibold flex items-center space-x-1.5">
+                    <i class="fa-solid fa-table-cells text-amber-400"></i>
+                    <span>Layout Tabel (MS Word)</span>
+                </button>
+            </div>
+
+            <!-- Ribbon Panel: Utama -->
+            <div class="flex items-center space-x-6 flex-wrap" x-show="activeRibbon === 'utama'">
+                <div class="flex items-center space-x-1 border-r border-slate-700 pr-4">
+                    <span class="text-slate-400 font-bold uppercase text-[10px] mr-2">Paper:</span>
+                    <span class="bg-slate-900 border border-slate-600 text-emerald-400 px-2.5 py-1 rounded font-bold">F4 / Folio (215 x 330 mm)</span>
+                    <span class="bg-slate-900 border border-slate-600 text-slate-300 px-2.5 py-1 rounded font-semibold">Margin 2.0 cm</span>
+                </div>
+                <div class="flex items-center space-x-1 border-r border-slate-700 pr-4">
+                    <span class="text-slate-400 font-bold uppercase text-[10px] mr-2">Font:</span>
+                    <span class="bg-slate-900 border border-slate-600 text-white px-2.5 py-1 rounded font-serif">Bookman Old Style 12pt</span>
+                    <span class="bg-red-500/20 text-red-400 px-2 py-1 rounded font-bold border border-red-500/30">Zero Bold</span>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button @click="alert('Mengunduh file DOCX F4 Margin 2cm Bookman 12pt...')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-1.5 rounded-lg flex items-center space-x-1.5 shadow">
+                        <i class="fa-solid fa-file-word"></i>
+                        <span>Export DOCX (F4 Margin 2cm)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Ribbon Panel: Layout Tabel MS Word -->
+            <div class="flex items-center space-x-4 flex-wrap" x-show="activeRibbon === 'layout_tabel'">
+                <div class="flex items-center space-x-1 border-r border-slate-700 pr-3">
+                    <button class="bg-slate-700 hover:bg-slate-600 text-white px-2.5 py-1 rounded font-semibold">+ Baris Atas</button>
+                    <button class="bg-slate-700 hover:bg-slate-600 text-white px-2.5 py-1 rounded font-semibold">+ Baris Bawah</button>
+                </div>
+                <div class="flex items-center space-x-1 border-r border-slate-700 pr-3">
+                    <button class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-2.5 py-1 rounded">Merge Cells</button>
+                    <button class="bg-slate-700 hover:bg-slate-600 text-white px-2.5 py-1 rounded">Split Cells</button>
+                </div>
+                <div class="flex items-center space-x-1 border-r border-slate-700 pr-3">
+                    <span class="text-slate-400 text-[10px] font-bold mr-1">Alignment Grid:</span>
+                    <div class="grid grid-cols-3 gap-0.5 w-10 h-10 bg-slate-900 p-0.5 rounded border border-slate-600">
+                        <template x-for="i in 9">
+                            <div class="bg-slate-800 hover:bg-emerald-500 cursor-pointer rounded-xs"></div>
+                        </template>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <span class="bg-slate-900 border border-slate-600 text-emerald-400 px-2 py-1 rounded font-mono">AutoFit 100%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas Workspace Preview -->
+        <div class="flex-1 bg-slate-950 p-8 overflow-y-auto">
+            <div class="paper-f4 text-slate-900 font-bookman space-y-6 relative text-xs leading-normal">
+                
+                <!-- Official Header Block 5 Lines Perbup Cirebon -->
+                <div class="w-1/2 ml-auto text-left space-y-0 text-[11pt] border-b border-slate-200 pb-4 mb-6">
+                    <div>LAMPIRAN LIII</div>
+                    <div>PERATURAN BUPATI CIREBON</div>
+                    <div>NOMOR &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TAHUN 2026</div>
+                    <div>TENTANG</div>
+                    <div>RENCANA KERJA PERANGKAT DAERAH TAHUN 2027</div>
+                </div>
+
+                <!-- Chapter Title -->
+                <div class="text-center font-bold space-y-1 text-sm pt-2">
+                    <div>BAB I</div>
+                    <div>PENDAHULUAN</div>
+                </div>
+
+                <!-- Paragraph 1.1 -->
+                <div class="space-y-2 text-justify">
+                    <div class="font-normal text-slate-900 font-semibold">1.1. Latar Belakang</div>
+                    <p>
+                        Rencana Kerja Perangkat Daerah (Renja PD) Kecamatan Losari Kabupaten Cirebon Tahun 2027 merupakan dokumen perencanaan tahunan yang disusun untuk memberikan arah kebijakan, program, dan kegiatan OPD. Penyusunan dokumen dilakukan dengan mematuhi ketentuan standar penulisan naskah dinas resmi Pemerintah Kabupaten Cirebon (ukuran kertas F4 / Folio 215 x 330 mm, margin seragam 2.0 cm di seluruh sisi, dan font Bookman Old Style 12pt).
+                    </p>
+                </div>
+
+                <!-- Sample Table Structure -->
+                <div class="pt-4 space-y-2">
+                    <div class="font-semibold">Tabel 1.1 Matriks Evaluasi Capaian Renja Tahun Berjalan</div>
+                    <table class="w-full border-collapse border border-slate-900 text-[10pt]">
+                        <thead>
+                            <tr class="bg-slate-100 border-b border-slate-900 text-center">
+                                <th class="border border-slate-900 p-2">No</th>
+                                <th class="border border-slate-900 p-2">Kode Program / Kegiatan</th>
+                                <th class="border border-slate-900 p-2">Indikator Kinerja</th>
+                                <th class="border border-slate-900 p-2">Target 2026</th>
+                                <th class="border border-slate-900 p-2">Realisasi (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="border border-slate-900 p-2 text-center">1</td>
+                                <td class="border border-slate-900 p-2">7.01.01.2.01.01</td>
+                                <td class="border border-slate-900 p-2">Jumlah Layanan Administrasi Perangkat Daerah</td>
+                                <td class="border border-slate-900 p-2 text-center">100%</td>
+                                <td class="border border-slate-900 p-2 text-center">100%</td>
+                            </tr>
+                            <tr>
+                                <td class="border border-slate-900 p-2 text-center">2</td>
+                                <td class="border border-slate-900 p-2">7.01.01.2.01.06</td>
+                                <td class="border border-slate-900 p-2">Cakupan Pembinaan Ketentraman & Ketertiban Umum</td>
+                                <td class="border border-slate-900 p-2 text-center">12 Bulan</td>
+                                <td class="border border-slate-900 p-2 text-center">100%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- MODULE 3: MESIN CUCI DOKUMEN (AUTO-FORMATTER) -->
+    <main class="flex-1 bg-slate-900 p-8" x-show="currentTab === 'formatter'">
+        <div class="max-w-4xl mx-auto space-y-6">
+            <div class="bg-slate-800 border border-slate-700 p-8 rounded-2xl shadow-xl space-y-6">
+                <div class="text-center space-y-2">
+                    <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs px-3 py-1 rounded-full font-bold uppercase">Python MS Word Formatter Engine</span>
+                    <h2 class="text-2xl font-extrabold text-white">Mesin Cuci Dokumen Smart Template</h2>
+                    <p class="text-slate-400 text-xs max-w-xl mx-auto leading-relaxed">
+                        Unggah file MS Word (.docx). Mesin Python kami akan mencuci dokumen secara otomatis: membuang kata pengantar/daftar isi untuk Renja, memaksa kertas F4 margin 2 cm, dan menghapus efek bold.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left text-xs">
+                    <div>
+                        <label class="block font-bold text-slate-300 uppercase mb-2">Perangkat Daerah (OPD)</label>
+                        <select x-model="selectedOpd" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold">
+                            <option value="Kecamatan Losari (LAMPIRAN LIII)">Kecamatan Losari (LAMPIRAN LIII)</option>
+                            <option value="Dinas Pendidikan (LAMPIRAN IV)">Dinas Pendidikan (LAMPIRAN IV)</option>
+                            <option value="Dinas Kesehatan (LAMPIRAN V)">Dinas Kesehatan (LAMPIRAN V)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-300 uppercase mb-2">Jenis Dokumen Template</label>
+                        <select x-model="selectedTemplate" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-emerald-400 font-bold">
+                            <option value="RENJA">RENJA (Rencana Kerja Perangkat Daerah)</option>
+                            <option value="RKPD">RKPD (Rencana Kerja Pemerintah Daerah)</option>
+                            <option value="EVALUASI_RKPD">EVALUASI RKPD</option>
+                            <option value="KUA_PPAS">KUA-PPAS</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold text-slate-300 uppercase mb-2">Tahun Anggaran</label>
+                        <select class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white font-bold">
+                            <option>2027 (Tahun Berjalan)</option>
+                            <option>2026</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Drag and Drop Box -->
+                <div class="border-2 border-dashed border-emerald-500/50 hover:border-emerald-400 bg-emerald-500/10 rounded-2xl p-10 text-center cursor-pointer transition space-y-3" @click="alert('Pencucian Python Sukses! File .docx telah disesuaikan ke F4 Margin 2cm, Bookman 12pt, tanpa bold!')">
+                    <div class="w-14 h-14 bg-emerald-500 text-slate-950 rounded-2xl flex items-center justify-center mx-auto text-2xl font-bold shadow-lg shadow-emerald-500/30">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                    </div>
+                    <div class="text-sm font-bold text-white">Klik atau Tarik File MS Word (.docx) ke Sini</div>
+                    <div class="text-xs text-slate-400">Aturan aktif: <span class="text-emerald-400 font-bold" x-text="selectedTemplate"></span></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODULE 4: TEMPLATES MANAGEMENT -->
+    <main class="flex-1 bg-slate-900 p-8" x-show="currentTab === 'templates'">
+        <div class="max-w-5xl mx-auto space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-extrabold text-white">Kelola Smart Template Dokumen</h2>
+                    <p class="text-xs text-slate-400">Daftar template dokumen perencanaan daerah yang aktif di sistem.</p>
+                </div>
+                <button @click="showAddModal = true" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-xl flex items-center space-x-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span>+ Tambah Template Manual</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-3 py-1 rounded-md font-bold">RENJA</span>
+                        <span class="text-slate-400 text-[10px]">Aktif</span>
+                    </div>
+                    <h3 class="text-base font-bold text-white">Rencana Kerja Perangkat Daerah (Renja)</h3>
+                    <p class="text-slate-400">Khusus Renja: Tanpa Cover/Kata Pengantar/Daftar Isi, Header Perbup 5 baris di halaman 1, Zero Bold.</p>
+                </div>
+
+                <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-3 py-1 rounded-md font-bold">RKPD</span>
+                        <span class="text-slate-400 text-[10px]">Aktif</span>
+                    </div>
+                    <h3 class="text-base font-bold text-white">Rencana Kerja Pemerintah Daerah (RKPD)</h3>
+                    <p class="text-slate-400">Format kabupaten: Memiliki Cover, Kata Pengantar, dan Daftar Isi otomatis.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODULE 5: REVIEW & VERIFIKASI BAPPERIDA (SELEKSI SELURUH DOKUMEN) -->
+    <main class="flex-1 bg-slate-900 p-8" x-show="currentTab === 'review'">
+        <div class="max-w-5xl mx-auto space-y-6">
+            <div class="bg-slate-800 border border-slate-700 p-6 rounded-2xl space-y-6">
+                
+                <!-- Filter Select Target Document to Review -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-700 pb-4">
+                    <div>
+                        <span class="bg-amber-500/20 text-amber-400 text-xs px-3 py-1 rounded-full font-bold uppercase">Modul Review Verifikator Bapperida</span>
+                        <h2 class="text-xl font-extrabold text-white mt-1">Verifikasi Dokumen Perencanaan (Semua Template)</h2>
+                    </div>
+                    
+                    <div class="text-xs">
+                        <label class="block text-slate-400 font-bold uppercase mb-1">Pilih Dokumen & Template Target Review:</label>
+                        <select x-model="selectedReviewDoc" class="bg-slate-900 border border-slate-700 text-emerald-400 font-bold px-4 py-2.5 rounded-xl w-full md:w-80">
+                            <option value="Dinas Kesehatan - Dokumen RKPD 2027">1. Dinas Kesehatan - Dokumen RKPD 2027</option>
+                            <option value="Dinas Pendidikan - Renja 2027">2. Dinas Pendidikan - Renja 2027</option>
+                            <option value="BKAD - Dokumen KUA-PPAS 2027">3. BKAD - Dokumen KUA-PPAS 2027</option>
+                            <option value="Bapperida - Laporan Evaluasi RKPD Triwulan IV">4. Bapperida - Evaluasi RKPD Triwulan IV</option>
+                            <option value="Dokumen Acuan Skema RPJMD/LKPJ">5. Dokumen Acuan Skema RPJMD/LKPJ</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Document Review Metadata -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700 space-y-1">
+                        <span class="text-slate-400 uppercase font-bold text-[10px]">Dokumen Target:</span>
+                        <div class="font-extrabold text-white" x-text="selectedReviewDoc"></div>
+                    </div>
+                    <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700 space-y-1">
+                        <span class="text-slate-400 uppercase font-bold text-[10px]">Status Verifikasi Saat Ini:</span>
+                        <div><span class="bg-amber-500 text-slate-950 font-bold px-2.5 py-0.5 rounded uppercase" x-text="reviewDecisionStatus === 'approved' ? 'DISETUJUI (APPROVED)' : (reviewDecisionStatus === 'revision' ? 'PERLU REVISI OPD' : 'MENUNGGU VERIFIKASI')"></span></div>
+                    </div>
+                    <div class="bg-slate-900/80 p-3.5 rounded-xl border border-slate-700 space-y-1">
+                        <span class="text-slate-400 uppercase font-bold text-[10px]">Standar Validasi:</span>
+                        <div class="font-bold text-emerald-400">Page Setup F4 (215x330mm) Margin 2cm</div>
+                    </div>
+                </div>
+
+                <!-- Structural Schema Checklist of the Document -->
+                <div class="space-y-3 text-xs">
+                    <h4 class="font-bold text-slate-200">Hasil Pemindaian Skema & Struktur Dokumen:</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="bg-slate-900/50 border border-slate-700 p-3 rounded-xl flex items-center justify-between">
+                            <span>1. Kelengkapan Bab & Sub-Bab Struktur</span>
+                            <span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1"></i>Sesuai Schema</span>
+                        </div>
+                        <div class="bg-slate-900/50 border border-slate-700 p-3 rounded-xl flex items-center justify-between">
+                            <span>2. Matriks Pagu Indikatif & Program</span>
+                            <span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1"></i>Sesuai SIPD</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bapperida Revision Notes Form -->
+                <div class="space-y-3 text-xs">
+                    <label class="block font-bold text-amber-400">INPUT CATATAN KOREKSI & VERIFIKASI BAPPERIDA:</label>
+                    <textarea rows="3" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-white" placeholder="Tuliskan catatan verifikasi atau arahan revisi untuk Perangkat Daerah..."></textarea>
+                </div>
+
+                <!-- Decision Action Buttons -->
+                <div class="flex items-center justify-end space-x-3 pt-2 border-t border-slate-700 text-xs">
+                    <button @click="reviewDecisionStatus = 'revision'; alert('Catatan Revisi Ditentukan! Status Dokumen diubah menjadi Perlu Revisi OPD.')" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2.5 rounded-xl">
+                        <i class="fa-solid fa-rotate-left mr-1"></i> Minta Revisi OPD
+                    </button>
+                    <button @click="reviewDecisionStatus = 'approved'; alert('Dokumen Berhasil Disetujui (Approved) oleh Tim Bapperida!')" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold px-5 py-2.5 rounded-xl shadow-lg shadow-emerald-500/20">
+                        <i class="fa-solid fa-check-double mr-1"></i> Setujui (Approve Dokumen)
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- MODULE 6: MONITORING 71 OPD -->
+    <main class="flex-1 bg-slate-900 p-8" x-show="currentTab === 'monitoring'">
+        <div class="max-w-5xl mx-auto space-y-6">
+            <div>
+                <h2 class="text-xl font-extrabold text-white">Monitoring Penyerahan Dokumen 71 OPD</h2>
+                <p class="text-xs text-slate-400">Pantau progres pengunggahan dan verifikasi dokumen seluruh Perangkat Daerah Kabupaten Cirebon.</p>
+            </div>
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 text-xs space-y-3">
+                <div class="flex justify-between font-bold text-slate-300">
+                    <span>Progress Penyerahan: 81.6%</span>
+                    <span>58 dari 71 OPD Selesai</span>
+                </div>
+                <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden">
+                    <div class="bg-emerald-500 h-full w-[81.6%]"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODULE 7: MASTER OPD & NOMENKLATUR -->
+    <main class="flex-1 bg-slate-900 p-8" x-show="currentTab === 'master'">
+        <div class="max-w-5xl mx-auto space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-extrabold text-white">Master Data 71 OPD & Nomenklatur (Admin)</h2>
+                    <p class="text-xs text-slate-400">Pemetaan nomor Lampiran Romawi Perbup resmi untuk 31 Dinas/Badan & 40 Kecamatan.</p>
+                </div>
+                <button @click="showMasterOpdModal = true" class="bg-emerald-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs">+ Tambah Master OPD</button>
+            </div>
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 text-xs">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="border-b border-slate-700 text-slate-400 font-bold uppercase">
+                            <th class="p-2">Kode Lampiran</th>
+                            <th class="p-2">Nama Perangkat Daerah</th>
+                            <th class="p-2">Kategori</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/60">
+                        <tr>
+                            <td class="p-2 font-bold text-amber-400">LAMPIRAN I</td>
+                            <td class="p-2">Sekretariat Daerah</td>
+                            <td class="p-2">Dinas / Badan Utama</td>
+                        </tr>
+                        <tr>
+                            <td class="p-2 font-bold text-amber-400">LAMPIRAN LIII</td>
+                            <td class="p-2">Kecamatan Losari</td>
+                            <td class="p-2">Kecamatan</td>
+                        </tr>
+                        <tr>
+                            <td class="p-2 font-bold text-amber-400">LAMPIRAN LXXI</td>
+                            <td class="p-2">Kecamatan Weru</td>
+                            <td class="p-2">Kecamatan</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- MODULE 8: HALAMAN KREDENSIAL LOGIN ADMIN & USER -->
+    <main class="flex-1 bg-slate-950 flex items-center justify-center p-6" x-show="currentTab === 'login'">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-8 max-w-lg w-full space-y-6 shadow-2xl">
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 bg-emerald-500 text-slate-950 rounded-2xl flex items-center justify-center mx-auto text-2xl font-bold">
+                    <i class="fa-solid fa-key"></i>
+                </div>
+                <h3 class="text-xl font-extrabold text-white">Kredensial Login Sistem e-Renja</h3>
+                <p class="text-xs text-slate-400">Gunakan akun bawaan (Seeder DB) berikut untuk login di server lokal/staging:</p>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <!-- Admin Card -->
+                <div class="bg-slate-900 border border-emerald-500/40 p-4 rounded-xl space-y-1">
+                    <div class="font-bold text-emerald-400 flex items-center justify-between">
+                        <span>🔑 Super Admin Bapperida</span>
+                        <span class="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-[10px]">Akses Penuh</span>
+                    </div>
+                    <div>Username / NIP: <span class="font-mono text-white bg-slate-800 px-2 py-0.5 rounded font-bold">admin</span></div>
+                    <div>Password: <span class="font-mono text-white bg-slate-800 px-2 py-0.5 rounded font-bold">password</span></div>
+                </div>
+
+                <!-- Verifikator Card -->
+                <div class="bg-slate-900 border border-amber-500/40 p-4 rounded-xl space-y-1">
+                    <div class="font-bold text-amber-400 flex items-center justify-between">
+                        <span>🔍 Tim Verifikator Perencana Bapperida</span>
+                        <span class="bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded text-[10px]">Verifikasi & Catatan</span>
+                    </div>
+                    <div>Username / NIP: <span class="font-mono text-white bg-slate-800 px-2 py-0.5 rounded font-bold">verifikator</span></div>
+                    <div>Password: <span class="font-mono text-white bg-slate-800 px-2 py-0.5 rounded font-bold">password</span></div>
+                </div>
+
+                <!-- Operator OPD Card -->
+                <div class="bg-slate-900 border border-blue-500/40 p-4 rounded-xl space-y-1">
+                    <div class="font-bold text-blue-400 flex items-center justify-between">
+                        <span>🏢 Operator OPD (Dinas PUPR / Kecamatan)</span>
+                        <span class="bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded text-[10px]">Input & Mesin Cuci</span>
+                    </div>
+                    <div>Username / NIP: <span class="font-mono text-white bg-slate-800 px-2 py-0.5 rounded font-bold">198501012010011001</span></div>
+                    <div>Password: <span class="font-mono text-white bg-slate-800 px-2 py-0.5 rounded font-bold">password</span></div>
+                </div>
+            </div>
+
+            <button @click="currentTab = 'review'; userRole = 'bapperida'; alert('Masuk sebagai Verifikator Bapperida!')" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold py-3 rounded-xl shadow-lg shadow-emerald-500/20 text-xs">
+                Simulasi Login Sebagai Verifikator
+            </button>
+        </div>
+    </main>
+
+    <!-- Modal Form + Tambah Template Manual -->
+    <div x-show="showAddModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 max-w-md w-full space-y-4">
+            <h3 class="text-base font-bold text-white">Tambah Template Manual</h3>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-300 mb-1">KODE TEMPLATE</label>
+                    <input type="text" placeholder="Contoh: KUA_PPAS" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-300 mb-1">NAMA TEMPLATE</label>
+                    <input type="text" placeholder="Contoh: Kebijakan Umum APBD & PPAS" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-white">
+                </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <button @click="showAddModal = false" class="px-4 py-2 bg-slate-700 text-white rounded-xl text-xs">Batal</button>
+                <button @click="showAddModal = false; alert('Template Baru Berhasil Didaftarkan!')" class="px-4 py-2 bg-emerald-500 text-slate-950 font-bold rounded-xl text-xs">Simpan Template</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-800 py-3 text-center text-xs text-slate-500">
+        e-Renja Bapperida Kabupaten Cirebon • Smart Template Studio All Modules Live App
+    </footer>
+
+</body>
+</html>
