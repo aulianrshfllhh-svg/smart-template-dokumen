@@ -92,7 +92,7 @@
     <div class="st-card p-6 sm:p-8 space-y-6">
         <form action="{{ route('formatter.process') }}" method="POST" enctype="multipart/form-data" @submit="isLoading = true" class="space-y-6">
             @csrf
-            <input type="hidden" name="tahun_anggaran" value="{{ session('active_ta', 2027) }}">
+            <input type="hidden" name="tahun_anggaran" value="{{ session('active_ta', (int) date('Y')) }}">
 
             <!-- STEP 1: PILIH OPD -->
             <div>

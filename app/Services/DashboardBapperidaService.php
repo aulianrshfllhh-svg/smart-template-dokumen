@@ -71,7 +71,7 @@ class DashboardBapperidaService
         $belumMenyusun = max(0, $totalOpd - $sudahMenyusun);
 
         return [
-            'total_opd' => $totalOpd > 0 ? $totalOpd : 71,
+            'total_opd' => $totalOpd,
             'sudah_menyusun' => $sudahMenyusun,
             'belum_menyusun' => $belumMenyusun,
         ];

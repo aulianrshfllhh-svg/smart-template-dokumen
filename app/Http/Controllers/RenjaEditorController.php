@@ -4,9 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\RenjaDocument;
 use App\Models\RenjaSection;
+use App\Models\RenjaSectionCaption;
 use App\Models\DocumentTemplate;
 use App\Services\DocumentTemplateService;
 use App\Services\RenjaIndexGeneratorService;
+use App\Services\WordExportService;
+use App\Services\PdfExportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -40,6 +43,13 @@ class RenjaEditorController extends Controller
         if ($document->isLampiranPerbub()) {
             return redirect()->route('renja.preview', ['id' => $document->id, 'is_lampiran' => 1])
                 ->with('info', 'Dokumen Lampiran merupakan dokumen turunan otomatis yang mengambil isi langsung dari dokumen induk secara live.');
+        }
+
+        // Pastikan seksi ter-generate jika dokumen belum memiliki struktur seksi template
+        if ($document->sections->isEmpty() && \Illuminate\Support\Facades\Gate::allows('update', $document)) {
+            $templateCode = $document->template?->code ?? (str_contains(strtoupper($document->jenis_dokumen ?? ''), 'PERUBAHAN') ? 'RENJA_PERUBAHAN' : 'RENJA_MURNI');
+            $this->templateService->provisionDocumentSections($document, $templateCode);
+            $document->load('sections');
         }
 
         $availableTemplates = $this->templateService->getAvailableTemplates();
@@ -85,55 +95,97 @@ class RenjaEditorController extends Controller
             return $idx !== false ? $idx : 99;
         });
 
-        // Tentukan Apakah Sedang Melihat Bagian Awal (Front Matter)
+        // Tentukan Bab dan Seksi Aktif Berdasarkan Query (section ID, bab code, atau default)
         $queryBab = strtoupper(trim($request->query('bab', '')));
-        $matchedFrontSection = null;
-        if (!empty($queryBab)) {
-            $matchedFrontSection = $frontSections->first(function($fs) use ($queryBab) {
-                return strtoupper(trim($fs->sub_bab_code)) === $queryBab 
-                    || strtoupper(trim($fs->section_type)) === $queryBab
-                    || strtoupper(trim($fs->sub_bab_title)) === $queryBab;
-            });
-        }
-
-        $isFrontView = $queryBab === 'FRONT' || $request->has('bagian_awal') || !is_null($matchedFrontSection) || ($request->query('section') && $frontSections->contains('id', (int)$request->query('section')));
-
-        // Tentukan Bab Aktif
-        $activeBabCode = strtoupper($request->query('bab', $groupedBabs->keys()->first() ?? ''));
-        if ($isFrontView) {
-            $activeBabCode = 'FRONT';
-            $activeSubBabs = collect();
-        } elseif (!$groupedBabs->has($activeBabCode) && $groupedBabs->count() > 0) {
-            $activeBabCode = $groupedBabs->keys()->first();
-            $activeSubBabs = $groupedBabs->get($activeBabCode, collect());
-        } else {
-            $activeSubBabs = $groupedBabs->get($activeBabCode, collect());
-        }
-
-        // Section aktif
         $activeSectionId = $request->query('section');
-        $activeSection = null;
-        if ($activeSectionId) {
-            $activeSection = $sections->firstWhere('id', $activeSectionId);
+        $activeSection = $activeSectionId ? $sections->firstWhere('id', (int)$activeSectionId) : null;
+
+        if (!$document->isLampiranPerbub() && $activeSection && !$frontSections->contains('id', $activeSection->id) && $queryBab === '') {
+            $queryBab = $activeSection->bab_code;
         }
-        if (!$activeSection) {
+        if (!$document->isLampiranPerbub() && $queryBab === '' && !$activeSection && $document->source_type === 'upload_word') {
+            $queryBab = $groupedBabs->keys()->first() ?? '';
+        }
+
+        $isCoverView = false;
+        $isFrontView = false;
+        $activeFrontSection = null;
+        $activeBabCode = '';
+
+        if ($activeSection && $frontSections->contains('id', $activeSection->id)) {
+            // Jika ada query section dan section tersebut termasuk front section
+            $isCoverView = ($activeSection->section_type === 'cover');
+            $isFrontView = true;
+            $activeBabCode = $isCoverView ? 'COVER' : 'FRONT';
+            $activeFrontSection = $isCoverView ? null : $activeSection;
+            $activeSubBabs = collect();
+        } elseif ($queryBab === 'COVER') {
+            $isCoverView = true;
+            $isFrontView = true;
+            $activeBabCode = 'COVER';
+            $activeSection = $frontSections->firstWhere('section_type', 'cover');
+            $activeSubBabs = collect();
+        } elseif ($queryBab === 'FRONT' || $request->has('bagian_awal')) {
+            $isCoverView = false;
+            $isFrontView = true;
+            $activeBabCode = 'FRONT';
+            $activeFrontSection = $frontSections->where('section_type', '!=', 'cover')->first();
+            $activeSection = $activeFrontSection;
+            $activeSubBabs = collect();
+        } else {
+            // Cek apakah queryBab cocok dengan kode/judul salah satu front section
+            $matchedFrontSection = null;
+            if (!empty($queryBab)) {
+                $matchedFrontSection = $frontSections->first(function($fs) use ($queryBab) {
+                    return strtoupper(trim($fs->sub_bab_code)) === $queryBab
+                        || strtoupper(trim($fs->sub_bab_title)) === $queryBab;
+                });
+            }
+
             if ($matchedFrontSection) {
+                $isCoverView = ($matchedFrontSection->section_type === 'cover');
+                $isFrontView = true;
+                $activeBabCode = $isCoverView ? 'COVER' : 'FRONT';
+                $activeFrontSection = $isCoverView ? null : $matchedFrontSection;
                 $activeSection = $matchedFrontSection;
-            } elseif ($isFrontView && $frontSections->count() > 0) {
-                $activeSection = $frontSections->first();
-            } elseif ($activeSubBabs->count() > 0) {
-                $activeSection = $activeSubBabs->first();
+                $activeSubBabs = collect();
+            } else {
+                // Tampilan BAB Utama (BAB I, BAB II, dst.)
+                $isCoverView = false;
+                $isFrontView = false;
+                if (empty($queryBab)) {
+                    // Default view saat baru membuka editor
+                    if (($formatConfig['has_cover'] ?? false) && ($frontSections->where('section_type', 'cover')->count() > 0 || !empty($document->cover_data))) {
+                        $activeBabCode = 'COVER';
+                        $isCoverView = true;
+                        $isFrontView = true;
+                        $activeSection = $frontSections->firstWhere('section_type', 'cover');
+                        $activeSubBabs = collect();
+                    } else {
+                        $activeBabCode = $groupedBabs->keys()->first() ?? 'BAB I';
+                        $activeSubBabs = $groupedBabs->get($activeBabCode, collect());
+                        $activeSection = $activeSection ?? ($activeSubBabs->firstWhere('section_type', '!=', 'chapter') ?? $activeSubBabs->first());
+                    }
+                } else {
+                    $activeBabCode = $groupedBabs->has($queryBab) ? $queryBab : ($groupedBabs->keys()->first() ?? 'BAB I');
+                    $activeSubBabs = $groupedBabs->get($activeBabCode, collect());
+                    $activeSection = $activeSection ?? ($activeSubBabs->firstWhere('section_type', '!=', 'chapter') ?? $activeSubBabs->first());
+                }
             }
         }
 
         // Jalankan engine validasi dinamis
         $validationResult = $this->runDynamicValidation($document);
 
-        // Hitung statistik kelengkapan per BAB (Sprint 6.0)
+        // Hitung statistik kelengkapan per BAB (Sprint 6.0 - dihitung dari sub-bab yang bukan chapter heading)
         $babStats = [];
         foreach ($groupedBabs as $bCode => $bSections) {
-            $totalSecs = $bSections->count();
-            $completedSecs = $bSections->filter(function ($s) {
+            $evaluableSecs = $bSections->where('section_type', '!=', 'chapter');
+            if ($evaluableSecs->count() === 0) {
+                $evaluableSecs = $bSections;
+            }
+            $totalSecs = $evaluableSecs->count();
+            $completedSecs = $evaluableSecs->filter(function ($s) {
                 return $this->hasMeaningfulContent($s->content ?? '');
             })->count();
 
@@ -149,12 +201,7 @@ class RenjaEditorController extends Controller
         }
 
         // Tentukan aturan Read-Only ketat (Dikunci hanya jika status final untuk Admin Bapperida, atau submitted/final untuk OPD)
-        $user = Auth::user();
-        if ($user->isAdmin() || $user->isVerifikator() || $user->isStaff()) {
-            $isReadOnly = in_array(strtolower($document->status), ['disetujui', 'approved', 'dikunci', 'final']);
-        } else {
-            $isReadOnly = in_array(strtolower($document->status), ['submitted', 'menunggu_pemeriksaan', 'menunggu_verifikasi', 'sedang_diperiksa', 'sedang_direview', 'under_review', 'disetujui', 'approved', 'dikunci', 'final']);
-        }
+        $isReadOnly = \Illuminate\Support\Facades\Gate::denies('update', $document);
 
         $lastSavedFormatted = $document->updated_at ? $document->updated_at->diffForHumans() : 'Belum pernah disimpan';
 
@@ -173,6 +220,8 @@ class RenjaEditorController extends Controller
             'activeBabCode',
             'activeSubBabs',
             'activeSection',
+            'activeFrontSection',
+            'isCoverView',
             'isFrontView',
             'validationResult',
             'babStats',
@@ -187,7 +236,7 @@ class RenjaEditorController extends Controller
     public function switchTemplate(Request $request, $id)
     {
         $document = RenjaDocument::findOrFail($id);
-        $this->authorizeDocumentOwnership($document);
+        $this->authorize('update', $document);
         
         $validated = $request->validate([
             'template_code' => ['required', 'string'],
@@ -205,7 +254,7 @@ class RenjaEditorController extends Controller
     public function updateCover(Request $request, $id)
     {
         $document = RenjaDocument::findOrFail($id);
-        $this->authorizeDocumentOwnership($document);
+        $this->authorize('update', $document);
 
         $validated = $request->validate([
             'judul_dokumen' => ['required', 'string'],
@@ -231,7 +280,7 @@ class RenjaEditorController extends Controller
     public function updateSection(Request $request, $id, $sectionId)
     {
         $document = RenjaDocument::findOrFail($id);
-        $this->authorizeDocumentOwnership($document);
+        $this->authorize('update', $document);
 
         if ($document->isLampiranPerbub()) {
             return response()->json([
@@ -241,6 +290,7 @@ class RenjaEditorController extends Controller
         }
         $section = RenjaSection::where('document_id', $document->id)->findOrFail($sectionId);
 
+        $request->validate(['content' => ['present', 'nullable', 'string'], 'note' => ['nullable', 'string', 'max:1000']]);
         $content = $request->input('content');
         
         // Jika format template melarang Bold (seperti RENJA), sanitasi tag bold
@@ -295,7 +345,7 @@ class RenjaEditorController extends Controller
     public function autofixSection(Request $request, $id, $sectionId)
     {
         $document = RenjaDocument::findOrFail($id);
-        $this->authorizeDocumentOwnership($document);
+        $this->authorize('update', $document);
 
         if ($document->isLampiranPerbub()) {
             return response()->json([
@@ -326,7 +376,7 @@ class RenjaEditorController extends Controller
     public function updateBabTitle(Request $request, $id)
     {
         $document = RenjaDocument::findOrFail($id);
-        $this->authorizeDocumentOwnership($document);
+        $this->authorize('update', $document);
 
         $validated = $request->validate([
             'bab_code' => ['required', 'string'],
@@ -357,7 +407,7 @@ class RenjaEditorController extends Controller
     public function deleteBab(Request $request, $id, $babCode)
     {
         $document = RenjaDocument::findOrFail($id);
-        $this->authorizeDocumentOwnership($document);
+        $this->authorize('update', $document);
 
         $babCodeUpper = strtoupper($babCode);
         $officialBabs = ['BAB I', 'BAB II', 'BAB III', 'BAB IV', 'BAB V'];
@@ -390,7 +440,7 @@ class RenjaEditorController extends Controller
     public function addBab(Request $request, $id)
     {
         $document = RenjaDocument::findOrFail($id);
-        $this->authorizeDocumentOwnership($document);
+        $this->authorize('update', $document);
 
         $validated = $request->validate([
             'bab_code' => ['required', 'string'],
@@ -431,7 +481,7 @@ class RenjaEditorController extends Controller
     public function addSubBab(Request $request, $id)
     {
         $document = RenjaDocument::findOrFail($id);
-        $this->authorizeDocumentOwnership($document);
+        $this->authorize('update', $document);
 
         $validated = $request->validate([
             'bab_code' => ['required', 'string'],
@@ -485,13 +535,13 @@ class RenjaEditorController extends Controller
     public function deleteSection(Request $request, $id, $sectionId)
     {
         $document = RenjaDocument::findOrFail($id);
-        $this->authorizeDocumentOwnership($document);
+        $this->authorize('update', $document);
 
         $section = RenjaSection::where('document_id', $document->id)->findOrFail($sectionId);
 
-        $officialCodes = ['1.1', '1.2', '1.3', '1.4', '2.1', '2.2', '2.3', '3.1', '3.2', '3.3', '4.1', '4.2', '5.1', '5.2', 'COVER', 'PENGESAHAN', 'PREFACE', 'TOC', 'LOT', 'LOF'];
-        if ($section->template_section_id !== null || in_array($section->sub_bab_code, $officialCodes)) {
-            return back()->with('error', 'Seksi resmi template (' . ($section->sub_bab_code ?? $section->bab_code) . ') bersifat baku dan tidak dapat dihapus.');
+        // Hanya seksi structural root seperti cover wajib yang dilindungi jika perlu
+        if ($section->section_type === 'cover' && ($document->template->validation_config['require_cover'] ?? false)) {
+            return back()->with('error', 'Halaman Cover Dokumen bersifat wajib dan tidak dapat dihapus.');
         }
 
         $babCode = $section->bab_code;
@@ -501,7 +551,27 @@ class RenjaEditorController extends Controller
         $this->indexGeneratorService->syncDocumentFrontIndexes($document);
 
         return redirect()->route('renja.editor', [$document->id, 'bab' => $babCode])
-            ->with('success', 'Sub-Bab ' . $subBabName . ' berhasil dihapus.');
+            ->with('success', 'Seksi ' . $subBabName . ' berhasil dihapus.');
+    }
+
+    /**
+     * Hapus SEMUA Sub-Bab & BAB dari dokumen (reset struktur isi dokumen).
+     * Front-matter (cover, kata pengantar, daftar isi, dll.) tetap dipertahankan.
+     */
+    public function deleteAllSubBab(Request $request, $id)
+    {
+        $document = RenjaDocument::findOrFail($id);
+        $this->authorize('update', $document);
+
+        // Hapus seluruh seksi isi (chapter & subchapter), front-matter dibiarkan
+        $deleted = RenjaSection::where('document_id', $document->id)
+            ->whereIn('section_type', ['chapter', 'subchapter'])
+            ->delete();
+
+        $this->indexGeneratorService->syncDocumentFrontIndexes($document);
+
+        return redirect()->route('renja.editor', [$document->id])
+            ->with('success', 'Seluruh Sub-Bab (' . $deleted . ' seksi) berhasil dihapus. Dokumen siap untuk ditata ulang.');
     }
 
     /**
@@ -510,7 +580,7 @@ class RenjaEditorController extends Controller
     public function addFrontMatter(Request $request, $id)
     {
         $document = RenjaDocument::findOrFail($id);
-        $this->authorizeDocumentOwnership($document);
+        $this->authorize('update', $document);
 
         $validated = $request->validate([
             'type' => ['required', 'string', 'in:cover,preface,table_of_contents,list_of_figures,list_of_tables,list_of_appendices'],
@@ -706,6 +776,7 @@ class RenjaEditorController extends Controller
      */
     public function storeTemplate(Request $request)
     {
+        abort_unless(Auth::user()?->isAdmin(), 403);
         $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:document_templates,code',
@@ -739,13 +810,155 @@ class RenjaEditorController extends Controller
     }
 
     /**
+     * Export dokumen ke format .docx (Microsoft Word).
+     */
+    public function exportWord(Request $request, $id)
+    {
+        $document = RenjaDocument::with(['opd', 'template', 'sections'])->findOrFail($id);
+        $this->authorizeDocumentOwnership($document);
+
+        // Preserve the existing Lampiran export flow.
+        if ($document->isLampiranPerbub()) {
+            $this->indexGeneratorService->syncDocumentFrontIndexes($document);
+        } else {
+            $this->indexGeneratorService->prepareExportSections($document);
+        }
+
+        $wordService = app(WordExportService::class);
+        $tmpFile = $wordService->generateRenjaDocx($document);
+
+        $fileName = str_replace(' ', '_', $document->jenis_dokumen ?? 'Dokumen_Renja')
+            . '_TA_' . $document->tahun_anggaran
+            . '_' . str_replace(' ', '_', $document->opd->nama_opd ?? 'OPD')
+            . '.docx';
+
+        return response()->download($tmpFile, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Export dokumen ke format PDF.
+     */
+    public function exportPdf(Request $request, $id)
+    {
+        $document = RenjaDocument::with(['opd', 'template', 'sections'])->findOrFail($id);
+        $this->authorizeDocumentOwnership($document);
+
+        // Preserve the existing Lampiran export flow.
+        if ($document->isLampiranPerbub()) {
+            $this->indexGeneratorService->syncDocumentFrontIndexes($document);
+        } else {
+            $this->indexGeneratorService->prepareExportSections($document);
+        }
+
+        $pdfService = app(PdfExportService::class);
+        $pdf = $pdfService->generateRenjaPdf($document);
+
+        $fileName = str_replace(' ', '_', $document->jenis_dokumen ?? 'Dokumen_Renja')
+            . '_TA_' . $document->tahun_anggaran
+            . '_' . str_replace(' ', '_', $document->opd->nama_opd ?? 'OPD')
+            . '.pdf';
+
+        return $pdf->download($fileName);
+    }
+
+    /**
+     * Simpan atau update caption untuk tabel/gambar di section tertentu (AJAX API).
+     */
+    public function saveCaption(Request $request, $id, $sectionId)
+    {
+        $document = RenjaDocument::findOrFail($id);
+        $this->authorize('update', $document);
+
+        $section = RenjaSection::where('document_id', $document->id)->findOrFail($sectionId);
+
+        $validated = $request->validate([
+            'element_type' => ['required', 'in:table,figure'],
+            'element_id' => ['required', 'string', 'max:100'],
+            'caption' => ['required', 'string', 'max:500'],
+            'display_number' => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $caption = RenjaSectionCaption::updateOrCreate(
+            [
+                'section_id' => $section->id,
+                'element_id' => $validated['element_id'],
+            ],
+            [
+                'element_type' => $validated['element_type'],
+                'caption' => $validated['caption'],
+                'display_number' => $validated['display_number'] ?? null,
+                'order_index' => RenjaSectionCaption::where('section_id', $section->id)
+                    ->where('element_type', $validated['element_type'])
+                    ->count(),
+            ]
+        );
+
+        // Re-sync daftar tabel/gambar otomatis
+        $this->indexGeneratorService->syncDocumentFrontIndexes($document);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Caption berhasil disimpan.',
+            'caption' => $caption,
+        ]);
+    }
+
+    /**
+     * Manual trigger untuk refresh/regenerate seluruh indeks front matter
+     * (Daftar Isi, Daftar Tabel, Daftar Gambar, Daftar Lampiran).
+     */
+    public function refreshIndexes(Request $request, $id)
+    {
+        $document = RenjaDocument::findOrFail($id);
+        $this->authorize('update', $document);
+
+        $this->indexGeneratorService->syncDocumentFrontIndexes($document);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Daftar Isi, Tabel, Gambar, dan Lampiran berhasil diperbarui.',
+        ]);
+    }
+
+    /**
      * Memastikan hak akses dokumen operator OPD terisolasi sesuai instansinya.
      */
     protected function authorizeDocumentOwnership(RenjaDocument $document): void
     {
-        $user = Auth::user();
-        if ($user && $user->isOperator() && (int)$document->opd_id !== (int)$user->opd_id) {
-            abort(403, 'Akses Ditolak: Anda tidak memiliki wewenang mengakses atau mengubah dokumen Perangkat Daerah lain.');
-        }
+        $this->authorize('view', $document);
     }
+    public function updateSubBabTitle(Request $request, $id, $sectionId)
+    {
+        $document = RenjaDocument::findOrFail($id);
+        $this->authorize('update', $document);
+        $section = $document->sections()->findOrFail($sectionId);
+        $validated = $request->validate(['sub_bab_title' => ['required', 'string', 'max:255']]);
+        if ($section->template_section_id) {
+            return back()->with('error', 'Judul sub-BAB resmi dari template tidak dapat diubah.');
+        }
+        $section->update($validated);
+        $this->indexGeneratorService->syncDocumentFrontIndexes($document->fresh());
+        return back()->with('success', 'Judul sub-BAB berhasil diperbarui.');
+    }
+
+    public function addTableEval(Request $request, $id)
+    {
+        $document = RenjaDocument::findOrFail($id);
+        $this->authorize('update', $document);
+        $data = $request->validate([
+            'jenis_tabel' => ['required', 'in:evaluasi_2.1,review_rkpd_2.4'],
+            'kode_rekening' => ['required', 'string', 'max:255'],
+            'nama_program_kegiatan' => ['required', 'string', 'max:255'],
+            'indikator_kinerja' => ['required', 'string'],
+            'target_capaian' => ['nullable', 'string', 'max:255'],
+            'realisasi_capaian' => ['nullable', 'string', 'max:255'],
+            'pagu_indikatif' => ['nullable', 'numeric', 'min:0'],
+            'realisasi_pagu' => ['nullable', 'numeric', 'min:0'],
+        ]);
+        $document->tableEvals()->create($data);
+        return back()->with('success', 'Data evaluasi berhasil ditambahkan.');
+    }
+
 }

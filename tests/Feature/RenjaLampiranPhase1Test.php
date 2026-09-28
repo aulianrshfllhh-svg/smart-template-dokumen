@@ -44,7 +44,7 @@ class RenjaLampiranPhase1Test extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_render_renja_lampiran_dedicated_workspace()
     {
         $response = $this->actingAs($this->operatorUser)
@@ -57,14 +57,14 @@ class RenjaLampiranPhase1Test extends TestCase
         $response->assertSee('LAMPIRAN XXXVIII');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_automatically_assigns_roman_attachment_number_from_opd()
     {
         $romawiHeader = RenjaAutoFixService::getRomanHeaderForOpd($this->opdDepok);
         $this->assertEquals('LAMPIRAN XXXVIII', $romawiHeader);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_create_renja_lampiran_murni_separately()
     {
         // Setup parent RENJA Murni
@@ -94,7 +94,7 @@ class RenjaLampiranPhase1Test extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_create_renja_lampiran_perubahan_separately()
     {
         // Setup parent RENJA Perubahan
@@ -124,7 +124,7 @@ class RenjaLampiranPhase1Test extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_can_upload_original_docx_for_renja_lampiran_murni_and_perubahan()
     {
         Storage::fake('private');

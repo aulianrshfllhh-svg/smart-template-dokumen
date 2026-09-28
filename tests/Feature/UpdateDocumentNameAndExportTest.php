@@ -63,7 +63,7 @@ class UpdateDocumentNameAndExportTest extends TestCase
             'status' => 'draft',
         ]);
 
-        $controller = new RenjaDocumentController(app(\App\Services\OpdDocumentService::class));
+        $controller = app(RenjaDocumentController::class);
         
         $filenameDocx = $controller->buildExportFilename($doc, 'docx');
         $filenamePdf = $controller->buildExportFilename($doc, 'pdf');

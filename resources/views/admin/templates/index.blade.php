@@ -23,67 +23,16 @@
     <!-- ========================================== -->
     <!-- 1. HEADER BANNER -->
     <!-- ========================================== -->
-    <div class="st-card-v2 p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-l-4 border-l-amber-500">
-        <div>
-            <div class="inline-flex items-center space-x-2 bg-amber-500/10 text-amber-900 border border-amber-500/30 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider mb-2">
-                <i class="fa-solid fa-layer-group text-xs"></i>
-                <span>STANDARD & DYNAMIC TEMPLATE ENGINE</span>
-            </div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                Manajemen Template Dokumen Perencanaan
-            </h1>
-            <p class="text-xs text-slate-500 font-medium mt-1 max-w-3xl">
-                Kelola master template resmi Rencana Kerja (Renja) Murni, Perubahan, Lampiran Murni, dan Lampiran Perubahan. Atur status aktif/nonaktif, hirarki Bab I - V, petunjuk pengisian OPD, dan proteksi immutability.
-            </p>
-        </div>
-
-        <div class="flex items-center space-x-3 shrink-0">
-            <div class="st-pill-v2 bg-slate-900 text-white font-mono text-[11px] px-3.5 py-1.5 rounded-xl border border-slate-800 flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-                <span>TA AKTIF {{ $activeYear ?? date('Y') }}</span>
-            </div>
-        </div>
-    </div>
+    <x-ui.page-heading title="Smart Template" description="Manajemen Template Dokumen Perencanaan: kelola struktur BAB dan panduan penyusunan perangkat daerah." eyebrow="Standar dokumen daerah"><x-slot:actions><x-ui.status-badge tone="purple" label="Template Resmi" /></x-slot:actions></x-ui.page-heading>
 
     <!-- ========================================== -->
     <!-- 2. SUMMARY METRICS CARDS -->
     <!-- ========================================== -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        
-        <div class="st-card-v2 p-5 border-l-4 border-l-blue-600 flex items-center justify-between">
-            <div class="space-y-1 min-w-0">
-                <span class="text-[11px] font-black text-slate-500 uppercase tracking-wider block">TOTAL TEMPLATE SYSTEM</span>
-                <div class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{{ $templates->count() }}</div>
-                <div class="text-[11px] text-blue-600 font-bold">Master Template Terdaftar</div>
-            </div>
-            <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl font-black border border-blue-100">
-                <i class="fa-solid fa-file-invoice"></i>
-            </div>
-        </div>
-
-        <div class="st-card-v2 p-5 border-l-4 border-l-emerald-600 flex items-center justify-between">
-            <div class="space-y-1 min-w-0">
-                <span class="text-[11px] font-black text-slate-500 uppercase tracking-wider block">TEMPLATE AKTIF (BR-030)</span>
-                <div class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{{ $templates->where('is_active', true)->count() }}</div>
-                <div class="text-[11px] text-emerald-600 font-bold">Tersedia untuk Penyusunan OPD</div>
-            </div>
-            <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-black border border-emerald-100">
-                <i class="fa-solid fa-circle-check"></i>
-            </div>
-        </div>
-
-        <div class="st-card-v2 p-5 border-l-4 border-l-amber-500 flex items-center justify-between">
-            <div class="space-y-1 min-w-0">
-                <span class="text-[11px] font-black text-slate-500 uppercase tracking-wider block">PROTEKSI IMMUTABILITY (BR-24)</span>
-                <div class="text-lg font-black text-slate-900 tracking-tight">Active Document Protection</div>
-                <div class="text-[11px] text-amber-600 font-bold">Mencegah Penghapusan Template Terpakai</div>
-            </div>
-            <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl font-black border border-amber-100">
-                <i class="fa-solid fa-shield-halved"></i>
-            </div>
-        </div>
-
-    </div>
+    <div class="ed-stats ed-stats-three">
+ <x-ui.statistic-card label="Total Template" :value="$templates->count()" icon="fa-layer-group" tone="purple" note="Master template terdaftar" />
+ <x-ui.statistic-card label="Template Aktif" :value="$templates->where('is_active', true)->count()" icon="fa-file-circle-check" tone="green" note="Tersedia untuk penyusunan OPD" />
+ <x-ui.statistic-card label="Perlindungan Dokumen" value="Aktif" icon="fa-shield-halved" note="Template terpakai tetap terlindungi" />
+ </div>
 
     <!-- ========================================== -->
     <!-- 3. TABLE MASTER TEMPLATE -->
@@ -101,7 +50,7 @@
         </div>
 
         <div class="st-table-wrapper rounded-2xl border border-slate-200 overflow-x-auto">
-            <table class="w-full text-xs text-left text-slate-700 border-collapse min-w-[800px]">
+            <x-ui.data-table class="w-full text-xs text-left text-slate-700 border-collapse min-w-[800px]">
                 <thead class="bg-slate-50 text-slate-900 uppercase text-[10px] font-black tracking-wider border-b border-slate-200">
                     <tr>
                         <th class="p-3.5">Kode & Nama Template</th>
@@ -119,7 +68,7 @@
                             <!-- KODE & NAMA TEMPLATE -->
                             <td class="p-3.5 font-bold text-slate-900">
                                 <div class="flex items-center space-x-3">
-                                    <div class="w-9 h-9 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+                                    <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
                                         <i class="fa-solid fa-file-invoice"></i>
                                     </div>
                                     <div class="min-w-0">
@@ -210,7 +159,7 @@
                         </tr>
                     @endforelse
                 </tbody>
-            </table>
+            </x-ui.data-table>
         </div>
 
     </div>

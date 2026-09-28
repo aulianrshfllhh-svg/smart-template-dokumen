@@ -25,52 +25,7 @@
     <!-- ============================================================ -->
     <!-- 1. COMPACT PAGE HEADER & DOCUMENT INFORMATION                -->
     <!-- ============================================================ -->
-    <div class="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-            <div class="flex items-center space-x-2 text-[11px] font-bold uppercase text-slate-400 mb-1">
-                <a href="{{ route('admin.verifikasi.index') }}" class="hover:text-amber-600 transition flex items-center gap-1">
-                    <i class="fa-solid fa-list-check text-amber-500"></i>
-                    <span>Workspace Verifikasi</span>
-                </a>
-                <span>/</span>
-                <span class="text-slate-700 font-extrabold">Review Dokumen</span>
-            </div>
-            <h1 class="text-lg sm:text-xl font-black text-slate-900 tracking-tight flex items-center gap-2 flex-wrap">
-                <span>Review Dokumen {{ $document->jenis_dokumen ?? 'RENJA Murni' }}</span>
-                <span class="text-slate-400 font-normal">•</span>
-                <span class="text-amber-600 font-extrabold">{{ $document->opd->nama_opd ?? 'Perangkat Daerah' }}</span>
-            </h1>
-            <div class="text-xs text-slate-500 font-medium mt-0.5 flex items-center gap-2 flex-wrap">
-                <span>Tahun Anggaran <strong>{{ $document->tahun_anggaran }}</strong></span>
-                <span>•</span>
-                <span>{{ $document->opd->nomor_lampiran_romawi ?? 'LAMPIRAN I' }}</span>
-                <span>•</span>
-                <span>Operator: <strong class="text-slate-700">{{ $document->updatedByUser->name ?? 'Operator OPD' }}</strong></span>
-            </div>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2.5 shrink-0">
-            @php
-                $statusEnum = \App\Enums\DocumentStatus::tryFrom($document->status);
-            @endphp
-            <span class="{{ $statusEnum ? $statusEnum->badgeClass() : 'bg-slate-100 text-slate-800' }} px-3 py-1.5 rounded-xl font-extrabold text-[11px] uppercase border shadow-2xs">
-                {{ $statusEnum ? $statusEnum->label() : strtoupper($document->status) }}
-            </span>
-
-            <a href="{{ route('renja.preview', $document->id) }}" target="_blank" 
-               class="st-btn bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-xs transition flex items-center gap-1.5"
-               title="Buka Dokumen Utuh dalam High-Fidelity PDF Viewer">
-                <i class="fa-solid fa-file-pdf text-amber-400"></i>
-                <span>Lihat Dokumen Asli</span>
-            </a>
-
-            <a href="{{ route('admin.verifikasi.index') }}" 
-               class="st-btn st-btn-outline st-btn-sm font-bold text-xs rounded-xl px-3 py-2 flex items-center gap-1.5 text-slate-600 hover:text-slate-900">
-                <i class="fa-solid fa-arrow-left text-xs"></i>
-                <span>Kembali</span>
-            </a>
-        </div>
-    </div>
+    <x-ui.page-heading :title="'Review Dokumen '.($document->jenis_dokumen ?? 'RENJA')" :description="($document->opd->nama_opd ?? 'Perangkat Daerah').' · Tahun Anggaran '.$document->tahun_anggaran" eyebrow="Verifikasi / Pemeriksaan Dokumen"><x-slot:actions><x-ui.status-badge :status="$document->status" :label="$document->status_label" /><a href="{{ route('renja.preview', $document->id) }}" target="_blank" rel="noopener" class="st-btn st-btn-primary">Lihat Dokumen Asli</a><a href="{{ route('admin.verifikasi.index') }}" class="st-btn st-btn-secondary">Kembali</a></x-slot:actions></x-ui.page-heading>
 
     <!-- ============================================================ -->
     <!-- 2. DOCUMENT SUMMARY & PROGRESS REVIEW (UNIFIED CARD)          -->
@@ -249,7 +204,7 @@
                         <!-- 1. SECTION HEADER -->
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3.5">
                             <div class="flex items-center space-x-3">
-                                <span class="w-9 h-9 rounded-xl bg-slate-900 text-amber-400 font-black text-xs flex items-center justify-center shadow-xs shrink-0">
+                                <span class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 font-black text-xs flex items-center justify-center shadow-xs shrink-0">
                                     <i class="fa-solid fa-book-bookmark"></i>
                                 </span>
                                 <div>

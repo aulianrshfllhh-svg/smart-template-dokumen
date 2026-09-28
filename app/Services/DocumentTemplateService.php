@@ -318,8 +318,7 @@ class DocumentTemplateService
             $this->seedRenjaLampiranSections($lampiranPerubahan);
         }
 
-        // Hapus template RKPD, EVALUASI_RKPD, dan RENJA_LAMPIRAN_PERBUB dari database per instruksi user
-        DocumentTemplate::whereIn('code', ['RKPD', 'EVALUASI_RKPD', 'RENJA_LAMPIRAN_PERBUB'])->delete();
+        // Preserve existing templates and their document links; filter availability in the catalog.
     }
 
     /**
@@ -734,7 +733,7 @@ class DocumentTemplateService
                         'sub_bab_code' => $ts->code,
                         'sub_bab_title' => $ts->title,
                         'content' => '',
-                        'guidance_text' => $ts->guidance_text,
+                        'guidance_text' => $ts->format_config['guidance_text'] ?? null,
                         'order_index' => $ts->sequence,
                         'is_completed' => false,
                         'metadata' => [

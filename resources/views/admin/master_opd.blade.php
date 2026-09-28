@@ -14,33 +14,11 @@
     @endif
 
     <!-- HEADER BANNER CLEAN & MODERN -->
-    <div class="st-card-v2 p-4 sm:p-5 bg-gradient-to-r from-slate-900 via-slate-900 to-slate-950 text-white rounded-2xl border border-slate-800 shadow-md">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
-            <div class="space-y-1 min-w-0">
-                <div class="inline-flex items-center space-x-2 bg-amber-500/20 text-amber-300 border border-amber-400/30 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider">
-                    <i class="fa-solid fa-landmark text-[10px]"></i>
-                    <span>MASTER DATA PERANGKAT DAERAH</span>
-                </div>
-                <h1 class="text-base sm:text-lg font-black text-white tracking-tight truncate">Data Perangkat Daerah Kabupaten Cirebon</h1>
-                <p class="text-xs text-slate-400 font-medium truncate">Daftar {{ $totalOpdCount }} Organisasi Perangkat Daerah & Kecamatan beserta akun operator dan ketersediaan dokumen.</p>
-            </div>
-
-            <div class="flex items-center space-x-3 shrink-0">
-                <div class="bg-slate-800/80 border border-slate-700/70 px-3.5 py-1.5 rounded-xl text-center">
-                    <div class="text-[9px] font-bold text-slate-400 uppercase tracking-wider">Total OPD</div>
-                    <div class="text-sm font-black text-amber-400">{{ $totalOpdCount }}</div>
-                </div>
-                <a href="{{ route('admin.dashboard') }}" class="st-btn bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl border border-slate-700/80 transition flex items-center space-x-1.5">
-                    <i class="fa-solid fa-arrow-left text-xs"></i>
-                    <span>Dashboard</span>
-                </a>
-            </div>
-        </div>
-    </div>
+    <x-ui.page-heading title="OPD & Pengguna" :description="'Daftar '.$totalOpdCount.' perangkat daerah beserta akun operator dan ketersediaan dokumen.'" eyebrow="Administrasi perangkat daerah"><x-slot:actions><x-ui.status-badge tone="blue" :label="$totalOpdCount.' OPD Terdaftar'" /></x-slot:actions></x-ui.page-heading>
 
     <!-- FILTER & SEARCH BAR -->
     <div class="st-card-v2 p-3 sm:p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs">
-        <form action="{{ route('admin.master_opd.index') }}" method="GET" class="flex flex-col sm:flex-row items-center justify-between gap-2.5">
+        <x-ui.search-filter action="{{ route('admin.master_opd.index') }}" method="GET" class="flex flex-col sm:flex-row items-center justify-between gap-2.5">
             <!-- SEARCH INPUT -->
             <div class="w-full sm:w-72 relative">
                 <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama atau kode OPD..." class="st-input pl-9 pr-4 text-xs h-9 rounded-xl w-full border-slate-200 focus:border-amber-500 focus:ring-amber-500">
@@ -55,7 +33,7 @@
                     <option value="all" {{ (string)$tahunAnggaran === 'all' ? 'selected' : '' }}>Semua Tahun</option>
                 </select>
 
-                <button type="submit" class="st-btn bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs h-9 px-4 rounded-xl transition shadow-xs flex items-center space-x-1.5">
+                <button type="submit" class="st-btn st-btn-primary font-black text-xs h-9 px-4 rounded-xl transition shadow-xs flex items-center space-x-1.5">
                     <i class="fa-solid fa-filter text-xs"></i>
                     <span>Filter</span>
                 </button>
@@ -66,13 +44,13 @@
                     </a>
                 @endif
             </div>
-        </form>
+        </x-ui.search-filter>
     </div>
 
     <!-- TABLE MASTER OPD (PRECISE INLINE PERCENTAGES FOR PERFECT 100% FIT) -->
     <div class="st-card-v2 bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div class="w-full overflow-hidden">
-            <table class="w-full text-left text-xs table-fixed">
+            <x-ui.data-table class="w-full text-left text-xs table-fixed">
                 <thead class="bg-slate-100/80 border-b border-slate-200 text-slate-600 font-extrabold uppercase text-[10px] tracking-wider">
                     <tr>
                         <th style="width: 4%" class="py-2.5 px-1.5 text-center">No</th>
@@ -108,7 +86,7 @@
                                 @if($opd->users && $opd->users->count() > 0)
                                     @php $opUser = $opd->users->first(); @endphp
                                     <div class="flex items-center space-x-1.5 min-w-0">
-                                        <div class="w-5.5 h-5.5 rounded-lg bg-slate-900 text-amber-400 font-black flex items-center justify-center text-[8.5px] shrink-0">
+                                        <div class="w-5.5 h-5.5 rounded-lg bg-blue-50 text-blue-600 font-black flex items-center justify-center text-[8.5px] shrink-0">
                                             {{ strtoupper(substr($opUser->name ?? 'OP', 0, 2)) }}
                                         </div>
                                         <div class="min-w-0 flex-1">
@@ -145,7 +123,7 @@
                         </tr>
                     @endforelse
                 </tbody>
-            </table>
+            </x-ui.data-table>
         </div>
 
         @if($opds->hasPages())

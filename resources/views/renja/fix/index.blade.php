@@ -80,7 +80,7 @@
 
         <div class="flex items-center space-x-3 shrink-0">
             <!-- Selector Tahun Anggaran -->
-            <form method="GET" action="{{ route('renja.fix.index') }}" class="flex items-center space-x-2">
+            <x-ui.search-filter method="GET" action="{{ route('renja.fix.index') }}" class="flex items-center space-x-2">
                 <label for="ta-select-fix" class="text-xs font-bold text-slate-600">Tahun:</label>
                 <select id="ta-select-fix" name="tahun_anggaran" onchange="this.form.submit()" class="st-select text-xs font-black h-10 rounded-xl px-3 bg-white border border-slate-300">
                     <option value="all" {{ $selectedTa === 'all' ? 'selected' : '' }}>Semua TA</option>
@@ -94,9 +94,9 @@
                 @if(!empty($searchQuery))
                     <input type="hidden" name="search" value="{{ $searchQuery }}">
                 @endif
-            </form>
+            </x-ui.search-filter>
 
-            <a href="{{ route('renja.workspace', ['tahun_anggaran' => $selectedTa !== 'all' ? $selectedTa : session('active_ta', 2027)]) }}" class="st-btn st-btn-outline st-btn-sm font-bold text-xs">
+            <a href="{{ route('renja.workspace', ['tahun_anggaran' => $selectedTa !== 'all' ? $selectedTa : session('active_ta', (int) date('Y'))]) }}" class="st-btn st-btn-outline st-btn-sm font-bold text-xs">
                 <i class="fa-solid fa-folder-tree text-amber-500"></i>
                 <span>Workspace TA</span>
             </a>
@@ -160,7 +160,7 @@
     <!-- 3. TOOLBAR (SEARCH, FILTER, SORT, VIEW)    -->
     <!-- ========================================== -->
     <div class="st-card-v2 p-4 sm:p-5 space-y-4">
-        <form method="GET" action="{{ $selectedDocument ? route('renja.fix.show', $selectedDocument->id) : route('renja.fix.index') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+        <x-ui.search-filter method="GET" action="{{ $selectedDocument ? route('renja.fix.show', $selectedDocument->id) : route('renja.fix.index') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3">
             @if($selectedDocument)
                 <input type="hidden" name="document_id" value="{{ $selectedDocument->id }}">
             @endif
@@ -227,7 +227,7 @@
                     <span>Grid</span>
                 </button>
             </div>
-        </form>
+        </x-ui.search-filter>
     </div>
 
     <!-- ========================================== -->
@@ -309,7 +309,7 @@
             @else
                 <!-- LIST VIEW (DEFAULT) -->
                 <div x-show="viewMode === 'list'" class="st-table-wrapper rounded-2xl border border-slate-200">
-                    <table class="w-full text-xs text-left text-slate-700 border-collapse">
+                    <x-ui.data-table class="w-full text-xs text-left text-slate-700 border-collapse">
                         <thead class="bg-slate-900 text-white uppercase text-[10px] font-black tracking-wider border-b border-slate-800">
                             <tr>
                                 <th class="p-3.5">Nama Dokumen</th>
@@ -416,7 +416,7 @@
                                 </tr>
                             @endforeach
                         </tbody>
-                    </table>
+                    </x-ui.data-table>
                 </div>
 
                 <!-- GRID VIEW -->
@@ -477,7 +477,7 @@
                 
                 <!-- LIST VIEW (DEFAULT) -->
                 <div x-show="viewMode === 'list'" class="st-table-wrapper rounded-2xl border border-slate-200">
-                    <table class="w-full text-xs text-left text-slate-700 border-collapse">
+                    <x-ui.data-table class="w-full text-xs text-left text-slate-700 border-collapse">
                         <thead class="bg-slate-900 text-white uppercase text-[10px] font-black tracking-wider border-b border-slate-800">
                             <tr>
                                 <th class="p-3.5">Nama Item</th>
@@ -615,7 +615,7 @@
                             @endif
 
                         </tbody>
-                    </table>
+                    </x-ui.data-table>
                 </div>
 
                 <!-- GRID VIEW LEVEL 2 -->
@@ -669,7 +669,7 @@
 
                 <!-- LIST VIEW SUB-BAB (DEFAULT) -->
                 <div x-show="viewMode === 'list'" class="st-table-wrapper rounded-2xl border border-slate-200">
-                    <table class="w-full text-xs text-left text-slate-700 border-collapse">
+                    <x-ui.data-table class="w-full text-xs text-left text-slate-700 border-collapse">
                         <thead class="bg-slate-900 text-white uppercase text-[10px] font-black tracking-wider border-b border-slate-800">
                             <tr>
                                 <th class="p-3.5">Kode & Judul Sub-bab</th>
@@ -729,7 +729,7 @@
                                 </tr>
                             @endforelse
                         </tbody>
-                    </table>
+                    </x-ui.data-table>
                 </div>
 
                 <!-- GRID VIEW SUB-BAB -->

@@ -58,6 +58,7 @@ class AdminController extends Controller
     public function reviewDocument($id)
     {
         $document = RenjaDocument::with(['opd', 'sections'])->findOrFail($id);
+        $this->authorize('review', $document);
 
         $groupedBabs = $document->sections->groupBy('bab_code');
 
@@ -70,13 +71,22 @@ class AdminController extends Controller
     public function processDecision(Request $request, $id)
     {
         $document = RenjaDocument::findOrFail($id);
+        $this->authorize('review', $document);
+        abort_if($document->isLocked(), 403, 'Dokumen telah dikunci.');
+        abort_unless(\App\Services\RenjaCycleService::isSubmittedOrParticipatedStatus($document->status), 422, 'Dokumen belum dikirim untuk verifikasi.');
 
         $decision = $request->input('decision'); // 'disetujui' / 'revisi'
 
         if ($decision === 'disetujui' || $decision === 'approved') {
-            $document->status = \App\Enums\DocumentStatus::APPROVED->value;
-            $document->catatan_bapperida = null;
-            $document->save();
+            if ($document->isLampiranPerbub()) {
+                $document->status = \App\Enums\DocumentStatus::APPROVED->value;
+                $document->catatan_bapperida = null;
+                $document->save();
+            } else {
+                app(\App\Services\VerificationReviewService::class)->processReviewDecision(
+                    $document->id, [], null, 'setujui_dokumen', null
+                );
+            }
 
             return redirect()->route('admin.dashboard')
                 ->with('success', "Dokumen Renja {$document->opd->nama_opd} telah BERHASIL DISETUJU & DIVERIFIKASI.");
@@ -89,9 +99,15 @@ class AdminController extends Controller
                 'catatan_bapperida.required' => 'Catatan revisi wajib diisi agar OPD mengetahui poin perbaikan.',
             ]);
 
-            $document->status = \App\Enums\DocumentStatus::REVISION_NEEDED->value;
-            $document->catatan_bapperida = $request->input('catatan_bapperida');
-            $document->save();
+            if ($document->isLampiranPerbub()) {
+                $document->status = \App\Enums\DocumentStatus::REVISION_NEEDED->value;
+                $document->catatan_bapperida = $request->input('catatan_bapperida');
+                $document->save();
+            } else {
+                app(\App\Services\VerificationReviewService::class)->processReviewDecision(
+                    $document->id, [], null, 'minta_revisi', $request->input('catatan_bapperida')
+                );
+            }
 
             return redirect()->route('admin.dashboard')
                 ->with('success', "Dokumen Renja {$document->opd->nama_opd} telah DIKEMBALIKAN KE OPD untuk perbaikan.");

@@ -23,192 +23,24 @@
     <!-- ========================================== -->
     <!-- 1. HEADER TITLE BANNER                     -->
     <!-- ========================================== -->
-    <div class="st-card-v2 p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-l-4 border-l-amber-500">
-        <div>
-            <div class="flex items-center space-x-2 text-[11px] font-black uppercase text-slate-400 mb-1">
-                <span>Workspace Operator SKPD</span>
-                <span>/</span>
-                <span class="text-slate-900">Dokumen Saya</span>
-            </div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                Dokumen Saya
-            </h1>
-            <p class="text-xs text-slate-500 font-medium mt-1">
-                Kelola seluruh dokumen perencanaan perangkat daerah.
-            </p>
-        </div>
-
-        <div class="flex items-center space-x-3 shrink-0">
-            <!-- TOMBOL UTAMA: BUAT DOKUMEN BARU -->
-            <button type="button" onclick="openModalBuatDokumen()" 
-                    class="st-btn st-btn-amber st-btn-lg shadow-md rounded-2xl font-black text-xs">
-                <i class="fa-solid fa-circle-plus text-sm"></i>
-                <span>+ Buat Dokumen Baru</span>
-            </button>
-        </div>
-    </div>
+    <x-ui.page-heading title="Dokumen Saya" description="Kelola dokumen perencanaan, lanjutkan penyusunan, dan pantau status verifikasi." eyebrow="Kelola dokumen"><x-slot:actions><button type="button" onclick="openModalBuatDokumen()" class="st-btn st-btn-primary"><i class="fa-solid fa-plus" aria-hidden="true"></i> Buat Dokumen Baru</button></x-slot:actions></x-ui.page-heading>
 
     <!-- ========================================== -->
     <!-- 2. TOP EXECUTIVE KPI CARDS                 -->
     <!-- ========================================== -->
     @if(Auth::user()->isAdmin() || Auth::user()->isVerifikator() || Auth::user()->role === 'staff_bapperida')
-        <!-- CARDS UNTUK AKUN BAPPERIDA (TANPA KARTU SUBMITTED) -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            
-            <!-- KPI 1: DRAFT / SEDANG DIKERJAKAN -->
-            <a href="{{ route('renja.index', ['status' => 'draft']) }}" 
-               class="st-card-v2 p-4 sm:p-5 border-l-4 border-l-amber-500 flex items-center justify-between hover:shadow-md transition {{ $statusFilter === 'draft' ? 'ring-2 ring-amber-400 bg-amber-50/50' : '' }}">
-                <div class="space-y-1 min-w-0">
-                    <span class="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5 truncate">
-                        <span>📝 DRAFT / SEDANG DIKERJAKAN</span>
-                    </span>
-                    <div class="flex items-baseline space-x-2">
-                        <span class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{{ $kpi['draft']['count'] ?? 0 }}</span>
-                        <span class="text-xs font-bold text-amber-600">({{ $kpi['draft']['percentage'] ?? 0 }}%)</span>
-                    </div>
-                    <div class="text-[10px] text-amber-600 font-bold flex items-center gap-1">
-                        <i class="fa-solid fa-clock-rotate-left text-[9px]"></i>
-                        <span>{{ $kpi['draft']['diff'] >= 0 ? '+' : '' }}{{ $kpi['draft']['diff'] }} dibanding minggu lalu</span>
-                    </div>
-                </div>
-                <div class="w-11 h-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-black border border-amber-200 shrink-0">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                </div>
-            </a>
-
-            <!-- KPI 2: FINAL / DIKUNCI -->
-            <a href="{{ route('renja.index', ['status' => 'final']) }}" 
-               class="st-card-v2 p-4 sm:p-5 border-l-4 border-l-emerald-600 flex items-center justify-between hover:shadow-md transition {{ $statusFilter === 'final' ? 'ring-2 ring-emerald-500 bg-emerald-50/50' : '' }}">
-                <div class="space-y-1 min-w-0">
-                    <span class="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5 truncate">
-                        <span>🟢 FINAL / DIKUNCI</span>
-                    </span>
-                    <div class="flex items-baseline space-x-2">
-                        <span class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{{ $kpi['final']['count'] ?? 0 }}</span>
-                        <span class="text-xs font-bold text-emerald-600">({{ $kpi['final']['percentage'] ?? 0 }}%)</span>
-                    </div>
-                    <div class="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
-                        <i class="fa-solid fa-circle-check text-[9px]"></i>
-                        <span>{{ $kpi['final']['diff'] >= 0 ? '+' : '' }}{{ $kpi['final']['diff'] }} dibanding minggu lalu</span>
-                    </div>
-                </div>
-                <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg font-black border border-emerald-200 shrink-0">
-                    <i class="fa-solid fa-circle-check"></i>
-                </div>
-            </a>
-
-            <!-- KPI 3: TOTAL DOKUMEN -->
-            <a href="{{ route('renja.index', ['status' => 'all', 'tahun_anggaran' => 'all', 'jenis_dokumen' => 'all', 'search' => '']) }}" 
-               class="st-card-v2 p-4 sm:p-5 border-l-4 border-l-blue-600 flex items-center justify-between hover:shadow-md transition {{ $statusFilter === 'all' || empty($statusFilter) ? 'ring-2 ring-blue-500 bg-blue-50/50' : '' }}"
-               title="Lihat Seluruh Dokumen Perencanaan (Reset Filter)">
-                <div class="space-y-1 min-w-0">
-                    <span class="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5 truncate">
-                        <span>📁 TOTAL DOKUMEN</span>
-                    </span>
-                    <div class="flex items-baseline space-x-2">
-                        <span class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{{ $documents->total() }}</span>
-                        <span class="text-xs font-bold text-blue-600">(100%)</span>
-                    </div>
-                    <div class="text-[10px] text-blue-600 font-bold flex items-center gap-1">
-                        <i class="fa-solid fa-folder-open text-[9px]"></i>
-                        <span>Seluruh Dokumen Perencanaan</span>
-                    </div>
-                </div>
-                <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg font-black border border-blue-200 shrink-0">
-                    <i class="fa-solid fa-folder-open"></i>
-                </div>
-            </a>
-
-        </div>
+    <div class="ed-stats ed-stats-three">
+        <x-ui.statistic-card label="DRAFT" :value="$kpi['draft']['count'] ?? 0" note="Dokumen dalam penyusunan" :href="route('renja.index', ['status' => 'draft'])" />
+        <x-ui.statistic-card label="FINAL / DIKUNCI" :value="$kpi['final']['count'] ?? 0" tone="green" note="Dokumen selesai" :href="route('renja.index', ['status' => 'final'])" />
+        <x-ui.statistic-card label="Total Dokumen" :value="$documents->total()" tone="purple" note="Dokumen sesuai filter aktif" :href="route('renja.index', ['status' => 'all', 'tahun_anggaran' => 'all', 'jenis_dokumen' => 'all', 'search' => ''])" />
+    </div>
     @else
-        <!-- TOP 4 EXECUTIVE KPI CARDS UNTUK OPD -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            
-            <!-- KPI 1: DRAFT -->
-            <a href="{{ route('renja.index', ['status' => 'draft']) }}" 
-               class="st-card-v2 p-4 sm:p-5 border-l-4 border-l-slate-400 flex items-center justify-between hover:shadow-md transition {{ $statusFilter === 'draft' ? 'ring-2 ring-slate-400 bg-slate-50' : '' }}">
-                <div class="space-y-1 min-w-0">
-                    <span class="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5 truncate">
-                        <span>📝 DRAFT</span>
-                    </span>
-                    <div class="flex items-baseline space-x-2">
-                        <span class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{{ $kpi['draft']['count'] ?? 0 }}</span>
-                        <span class="text-xs font-bold text-slate-400">({{ $kpi['draft']['percentage'] ?? 0 }}%)</span>
-                    </div>
-                    <div class="text-[10px] text-slate-500 font-bold flex items-center gap-1">
-                        <i class="fa-solid fa-clock-rotate-left text-[9px]"></i>
-                        <span>{{ $kpi['draft']['diff'] >= 0 ? '+' : '' }}{{ $kpi['draft']['diff'] }} dibanding minggu lalu</span>
-                    </div>
-                </div>
-                <div class="w-11 h-11 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center text-lg font-black border border-slate-200 shrink-0">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                </div>
-            </a>
-
-            <!-- KPI 2: PERLU REVISI -->
-            <a href="{{ route('renja.index', ['status' => 'revision_required']) }}" 
-               class="st-card-v2 p-4 sm:p-5 border-l-4 border-l-rose-500 flex items-center justify-between hover:shadow-md transition {{ in_array($statusFilter, ['revisi', 'perlu_revisi', 'revision_required', 'revision']) ? 'ring-2 ring-rose-400 bg-rose-50/50' : '' }}">
-                <div class="space-y-1 min-w-0">
-                    <span class="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5 truncate">
-                        <span>🟠 PERLU REVISI</span>
-                    </span>
-                    <div class="flex items-baseline space-x-2">
-                        <span class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{{ $kpi['revisi']['count'] ?? 0 }}</span>
-                        <span class="text-xs font-bold text-rose-600">({{ $kpi['revisi']['percentage'] ?? 0 }}%)</span>
-                    </div>
-                    <div class="text-[10px] text-rose-600 font-bold flex items-center gap-1">
-                        <i class="fa-solid fa-triangle-exclamation text-[9px]"></i>
-                        <span>{{ $kpi['revisi']['diff'] >= 0 ? '+' : '' }}{{ $kpi['revisi']['diff'] }} dibanding minggu lalu</span>
-                    </div>
-                </div>
-                <div class="w-11 h-11 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg font-black border border-rose-200 shrink-0">
-                    <i class="fa-solid fa-file-circle-exclamation"></i>
-                </div>
-            </a>
-
-            <!-- KPI 3: SEDANG DIVERIFIKASI -->
-            <a href="{{ route('renja.index', ['status' => 'under_verification']) }}" 
-               class="st-card-v2 p-4 sm:p-5 border-l-4 border-l-blue-600 flex items-center justify-between hover:shadow-md transition {{ in_array($statusFilter, ['submitted', 'under_verification', 'menunggu_verifikasi', 'menunggu']) ? 'ring-2 ring-blue-500 bg-blue-50/50' : '' }}">
-                <div class="space-y-1 min-w-0">
-                    <span class="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5 truncate">
-                        <span>🔵 SEDANG DIVERIFIKASI</span>
-                    </span>
-                    <div class="flex items-baseline space-x-2">
-                        <span class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{{ $kpi['submitted']['count'] ?? 0 }}</span>
-                        <span class="text-xs font-bold text-blue-600">({{ $kpi['submitted']['percentage'] ?? 0 }}%)</span>
-                    </div>
-                    <div class="text-[10px] text-blue-600 font-bold flex items-center gap-1">
-                        <i class="fa-solid fa-paper-plane text-[9px]"></i>
-                        <span>{{ $kpi['submitted']['diff'] >= 0 ? '+' : '' }}{{ $kpi['submitted']['diff'] }} dibanding minggu lalu</span>
-                    </div>
-                </div>
-                <div class="w-11 h-11 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg font-black border border-blue-200 shrink-0">
-                    <i class="fa-solid fa-paper-plane"></i>
-                </div>
-            </a>
-
-            <!-- KPI 4: FINAL / DISUTUJUI -->
-            <a href="{{ route('renja.index', ['status' => 'approved']) }}" 
-               class="st-card-v2 p-4 sm:p-5 border-l-4 border-l-emerald-600 flex items-center justify-between hover:shadow-md transition {{ in_array($statusFilter, ['final', 'approved', 'disetujui', 'dikunci']) ? 'ring-2 ring-emerald-500 bg-emerald-50/50' : '' }}">
-                <div class="space-y-1 min-w-0">
-                    <span class="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5 truncate">
-                        <span>🟢 FINAL / DISUTUJUI</span>
-                    </span>
-                    <div class="flex items-baseline space-x-2">
-                        <span class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{{ $kpi['final']['count'] ?? 0 }}</span>
-                        <span class="text-xs font-bold text-emerald-600">({{ $kpi['final']['percentage'] ?? 0 }}%)</span>
-                    </div>
-                    <div class="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
-                        <i class="fa-solid fa-circle-check text-[9px]"></i>
-                        <span>{{ $kpi['final']['diff'] >= 0 ? '+' : '' }}{{ $kpi['final']['diff'] }} dibanding minggu lalu</span>
-                    </div>
-                </div>
-                <div class="w-11 h-11 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg font-black border border-emerald-200 shrink-0">
-                    <i class="fa-solid fa-circle-check"></i>
-                </div>
-            </a>
-
-        </div>
+    <div class="ed-stats">
+        <x-ui.statistic-card label="Draft" :value="$kpi['draft']['count'] ?? 0" note="Lanjutkan penyusunan" :href="route('renja.index', ['status' => 'draft'])" />
+        <x-ui.statistic-card label="Perlu Revisi" :value="$kpi['revisi']['count'] ?? 0" tone="red" note="Tindak lanjuti catatan" :href="route('renja.index', ['status' => 'revision_required'])" />
+        <x-ui.statistic-card label="Sedang Diverifikasi" :value="$kpi['submitted']['count'] ?? 0" tone="purple" note="Dalam pemeriksaan" :href="route('renja.index', ['status' => 'under_verification'])" />
+        <x-ui.statistic-card label="Final / Disetujui" :value="$kpi['final']['count'] ?? 0" tone="green" note="Dokumen selesai" :href="route('renja.index', ['status' => 'approved'])" />
+    </div>
     @endif
 
     <!-- ========================================== -->
@@ -216,7 +48,7 @@
     <!-- ========================================== -->
     <div class="st-card-v2 p-4 sm:p-5 space-y-4">
         
-        <form method="GET" action="{{ route('renja.index') }}" @submit="isLoading = true" class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+        <x-ui.search-filter method="GET" action="{{ route('renja.index') }}" @submit="isLoading = true" class="grid grid-cols-1 sm:grid-cols-12 gap-3">
             
             <!-- SEARCH INPUT (LEFT SIDEBAR FILTER) -->
             <div class="sm:col-span-4 relative">
@@ -233,7 +65,7 @@
                 <select name="tahun_anggaran" class="st-select text-xs h-10 rounded-xl font-bold">
                     <option value="all">Semua TA</option>
                     @foreach(range(2025, 2035) as $yOpt)
-                        <option value="{{ $yOpt }}" {{ ($tahunFilter ?? session('active_ta', 2027)) == $yOpt ? 'selected' : '' }}>TA {{ $yOpt }}</option>
+                        <option value="{{ $yOpt }}" {{ ($tahunFilter ?? session('active_ta', (int) date('Y'))) == $yOpt ? 'selected' : '' }}>TA {{ $yOpt }}</option>
                     @endforeach
                 </select>
             </div>
@@ -278,7 +110,7 @@
                 @endif
             </div>
 
-        </form>
+        </x-ui.search-filter>
 
     </div>
 
@@ -352,7 +184,7 @@
 
         <!-- TABLE DATA -->
         <div class="st-table-wrapper rounded-2xl border border-slate-200">
-            <table class="w-full text-xs text-left text-slate-700 border-collapse">
+            <x-ui.data-table class="w-full text-xs text-left text-slate-700 border-collapse">
                 <thead class="bg-slate-900 text-white uppercase text-[10px] font-black tracking-wider border-b border-slate-800">
                     <tr>
                         <th class="p-3.5">Nama Dokumen</th>
@@ -368,11 +200,12 @@
                 <tbody class="divide-y divide-slate-100">
                     @forelse($documents as $doc)
                         @php
-                            $isDraft = in_array($doc->status, ['draft', 'belum_dikerjakan']);
-                            $isRevisi = in_array($doc->status, ['perlu_revisi', 'revisi', 'revision']);
-                            $isSubmitted = in_array($doc->status, ['submitted', 'menunggu_pemeriksaan', 'menunggu_verifikasi', 'dikirim_ulang']);
-                            $isUnderReview = in_array($doc->status, ['sedang_diperiksa', 'sedang_direview', 'under_review']);
-                            $isFinal = in_array($doc->status, ['disetujui', 'approved', 'dikunci', 'final']);
+                            $stLower = strtolower(trim($doc->status ?? ''));
+                            $isDraft = in_array($stLower, ['draft', 'belum_dikerjakan']);
+                            $isRevisi = in_array($stLower, ['perlu_revisi', 'revisi', 'revision']);
+                            $isSubmitted = in_array($stLower, ['submitted', 'menunggu_pemeriksaan', 'menunggu_verifikasi', 'dikirim_ulang']);
+                            $isUnderReview = in_array($stLower, ['sedang_diperiksa', 'sedang_direview', 'under_review']);
+                            $isFinal = in_array($stLower, ['disetujui', 'approved', 'dikunci', 'final']);
 
                             $isBapperidaAdmin = Auth::user()->isAdmin() || Auth::user()->isVerifikator() || Auth::user()->isStaff();
                             $canEdit = $isBapperidaAdmin ? !$isFinal : ($isDraft || $isRevisi);
@@ -387,8 +220,8 @@
                                     $statusLabel = 'DRAFT';
                                 }
                             } else {
-                                $stEnum = \App\Enums\DocumentStatus::tryFrom($doc->status);
-                                $badgeClass = $stEnum ? $stEnum->badgeClass() : 'bg-slate-100 text-slate-800';
+                                $stEnum = \App\Enums\DocumentStatus::tryFrom($doc->status) ?? \App\Enums\DocumentStatus::tryFrom($stLower);
+                                $badgeClass = $stEnum ? $stEnum->badgeClass() : ($isDraft ? 'bg-amber-50 text-amber-900 border border-amber-300' : 'bg-slate-100 text-slate-800');
                                 $statusLabel = $stEnum ? $stEnum->label() : strtoupper($doc->status);
                             }
 
@@ -494,8 +327,8 @@
                                             </a>
                                         @else
                                             <a href="{{ route('renja.editor', $doc->id) }}" 
-                                               class="st-btn st-btn-primary st-btn-sm text-[11px] h-7.5 px-2.5 rounded-xl font-bold"
-                                               title="Edit Dokumen">
+                                               class="st-btn bg-slate-900 hover:bg-slate-800 text-white text-[11px] h-7.5 px-2.5 rounded-xl font-bold flex items-center gap-1 shadow-xs transition cursor-pointer"
+                                               title="Edit Dokumen (Draft)">
                                                 <i class="fa-solid fa-pen-to-square text-[10px]"></i>
                                                 <span>Edit</span>
                                             </a>
@@ -528,7 +361,7 @@
                                                   onsubmit="return confirm('Kirim dokumen ini ke Admin Bapperida untuk diverifikasi?')">
                                                 @csrf
                                                 <button type="submit" 
-                                                        class="st-btn st-btn-amber st-btn-sm text-[11px] h-7.5 px-2.5 rounded-xl font-bold shadow-xs"
+                                                        class="st-btn st-btn-amber st-btn-sm text-[11px] h-7.5 px-2.5 rounded-xl font-bold shadow-xs flex items-center gap-1 cursor-pointer"
                                                         title="Submit Verifikasi ke Bapperida">
                                                     <i class="fa-solid fa-paper-plane text-[10px]"></i>
                                                     <span>Submit</span>
@@ -646,7 +479,7 @@
                         </tr>
                     @endforelse
                 </tbody>
-            </table>
+            </x-ui.data-table>
         </div>
 
         <!-- PAGINATION -->

@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use App\Models\ReferenceDocumentSchema;
+use App\Policies\ReferenceDocumentPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,6 +22,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Daftarkan policy Acuan Dokumen
+        Gate::policy(ReferenceDocumentSchema::class, ReferenceDocumentPolicy::class);
+        Gate::policy(\App\Models\RenjaDocument::class, \App\Policies\RenjaDocumentPolicy::class);
     }
 }

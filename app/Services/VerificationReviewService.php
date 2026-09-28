@@ -89,10 +89,18 @@ class VerificationReviewService
     {
         $document = RenjaDocument::findOrFail($documentId);
         $user = Auth::user();
+        \Illuminate\Support\Facades\Gate::authorize('review', $document);
 
         // Aturan Bisnis: Dokumen yang sudah APPROVED tidak dapat diubah lagi
         if (in_array($document->status, ['disetujui', 'approved', 'dikunci', 'final'])) {
             throw new \Exception('Dokumen yang telah disetujui (APPROVED) telah dikunci dan tidak dapat diedit lagi.');
+        }
+
+        abort_if($document->is_archived, 403, 'Dokumen telah diarsipkan.');
+        abort_unless(RenjaCycleService::isSubmittedOrParticipatedStatus($document->status), 422, 'Dokumen belum dikirim untuk verifikasi.');
+        if ($assignedVerificatorId) {
+            $assignee = User::findOrFail($assignedVerificatorId);
+            abort_unless($assignee->isAdmin() || $assignee->isVerifikator() || $assignee->isStaff(), 422, 'Penerima tugas harus petugas Bapperida.');
         }
 
         // 1. Update PR-Style Section Review Statuses
@@ -181,6 +189,9 @@ class VerificationReviewService
     {
         $document = RenjaDocument::findOrFail($documentId);
         $verificator = User::findOrFail($verificatorId);
+        \Illuminate\Support\Facades\Gate::authorize('review', $document);
+        abort_if($document->isLocked(), 403);
+        abort_unless($verificator->isAdmin() || $verificator->isVerifikator() || $verificator->isStaff(), 422);
         $user = Auth::user();
 
         $document->assigned_verificator_id = $verificator->id;

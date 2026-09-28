@@ -16,28 +16,7 @@
     <!-- ========================================== -->
     <!-- 1. HEADER EDIT BANNER -->
     <!-- ========================================== -->
-    <div class="st-card-v2 p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-l-4 border-l-amber-500">
-        <div>
-            <div class="flex items-center space-x-2 text-[11px] font-black uppercase text-slate-400 mb-1">
-                <a href="{{ route('admin.templates.index') }}" class="hover:text-amber-600 transition">Manajemen Template</a>
-                <span>/</span>
-                <span class="text-slate-900">Builder Struktur & Format F4</span>
-            </div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                {{ $template->name }}
-            </h1>
-            <p class="text-xs text-slate-500 font-medium mt-1">
-                Kode Template: <span class="font-mono font-bold text-amber-600">{{ $template->code }}</span> • {{ $template->sections->count() }} Seksi Terdaftar
-            </p>
-        </div>
-
-        <div class="flex items-center space-x-3 shrink-0">
-            <a href="{{ route('admin.templates.index') }}" class="st-btn st-btn-secondary st-btn-sm rounded-xl font-bold">
-                <i class="fa-solid fa-arrow-left text-xs"></i>
-                <span>Kembali ke Master Template</span>
-            </a>
-        </div>
-    </div>
+    <x-ui.page-heading :title="$template->name" :description="'Kode '.$template->code.' · '.$template->sections->count().' bagian dokumen'" eyebrow="Smart Template / Editor Struktur"><x-slot:actions><a href="{{ route('admin.templates.index') }}" class="st-btn st-btn-secondary">Kembali ke Template</a></x-slot:actions></x-ui.page-heading>
 
     <!-- ========================================== -->
     <!-- 2. TAB BUTTONS (CONFIG vs STRUCTURE) -->
@@ -159,7 +138,7 @@
 
                         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-2.5">
                             <div class="flex items-center space-x-2">
-                                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full {{ $sec->section_type === 'chapter' ? 'bg-slate-900 text-amber-400' : 'bg-amber-100 text-amber-900 border border-amber-300' }}">
+                                <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full {{ $sec->section_type === 'chapter' ? 'bg-blue-50 text-blue-600' : 'bg-amber-100 text-amber-900 border border-amber-300' }}">
                                     {{ strtoupper($sec->section_type) }}
                                 </span>
                                 <span class="text-xs font-mono font-bold text-slate-500">#{{ $sec->sequence }}</span>

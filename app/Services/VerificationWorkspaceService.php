@@ -33,7 +33,7 @@ class VerificationWorkspaceService
             'direview' => $countByStatus(['sedang_diperiksa', 'under_review', 'review']),
             'revisi' => $countByStatus(['perlu_revisi', 'revisi', 'revision']),
             'disetujui' => $countByStatus(['disetujui', 'approved', 'dikunci', 'final']),
-            'total_opd' => $totalOpd > 0 ? $totalOpd : 71,
+            'total_opd' => $totalOpd,
             'sudah_menyusun' => count($submittedOpdIds),
         ];
     }
@@ -43,10 +43,13 @@ class VerificationWorkspaceService
      */
     public function getQuickStats(): array
     {
+        $query = RenjaDocument::query();
+        RenjaCycleService::applyActiveCycleFilter($query, (int) session('active_ta', date('Y')));
+        RenjaCycleService::applyParticipatedStatusFilter($query);
         return [
-            'today' => RenjaDocument::whereDate('updated_at', now()->today())->count(),
-            'this_week' => RenjaDocument::whereBetween('updated_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
-            'this_month' => RenjaDocument::whereMonth('updated_at', now()->month)->whereYear('updated_at', now()->year)->count(),
+            'today' => (clone $query)->whereDate('updated_at', now()->toDateString())->count(),
+            'this_week' => (clone $query)->whereBetween('updated_at', [now()->startOfWeek(), now()->endOfWeek()])->count(),
+            'this_month' => (clone $query)->whereMonth('updated_at', now()->month)->whereYear('updated_at', now()->year)->count(),
         ];
     }
 
@@ -57,7 +60,7 @@ class VerificationWorkspaceService
     public function calculatePriorityScore(RenjaDocument $document): int
     {
         $submittedAt = $document->submitted_at ?? $document->created_at;
-        $daysWaiting = max(0, (int) now()->diffInDays($submittedAt));
+        $daysWaiting = max(0, (int) $submittedAt->diffInDays(now()));
         $revisionCount = $document->revision_count ?? 0;
 
         // Bobot OPD Strategis (misal Dinas PUPR, Dinkes, Disdik, Bapperida memuat pagu/dampak besar)
@@ -88,7 +91,7 @@ class VerificationWorkspaceService
             ->whereIn('status', ['menunggu_pemeriksaan', 'menunggu_verifikasi', 'submitted', 'dikirim_ulang', 'sedang_diperiksa']);
         \App\Services\RenjaCycleService::applyActiveCycleFilter($query, $activeYear);
 
-        $documents = $query->get();
+        $documents = $query->withCount(['sections', 'sections as completed_sections_count' => fn ($q) => $q->where('is_completed', true)])->get();
 
         // Hitung skor & urutkan dari skor tertinggi
         foreach ($documents as $doc) {
@@ -119,9 +122,7 @@ class VerificationWorkspaceService
         $activeYear = $activeYear ?? session('active_ta', (int) date('Y'));
         $query = RenjaDocument::with(['opd', 'assignedVerificator', 'updatedByUser', 'sections']);
 
-        if (empty($tahunFilter) || $tahunFilter === 'all') {
-            \App\Services\RenjaCycleService::applyActiveCycleFilter($query, $activeYear);
-        }
+        RenjaCycleService::applyActiveCycleFilter($query, $activeYear);
 
         // Filter Search (Nama OPD / Kode OPD / Jenis / TA)
         if (!empty($search)) {
@@ -195,10 +196,11 @@ class VerificationWorkspaceService
      */
     public function getRecentVerificationLogs(int $limit = 6): array
     {
-        $documents = RenjaDocument::with(['opd', 'updatedByUser', 'assignedVerificator'])
-            ->whereNotNull('metadata')
-            ->orderBy('updated_at', 'desc')
-            ->get();
+        $query = RenjaDocument::with(['opd', 'updatedByUser', 'assignedVerificator'])
+            ->whereNotNull('metadata');
+        RenjaCycleService::applyActiveCycleFilter($query, (int) session('active_ta', date('Y')));
+        RenjaCycleService::applyParticipatedStatusFilter($query);
+        $documents = $query->orderBy('updated_at', 'desc')->get();
 
         $logs = [];
         foreach ($documents as $doc) {

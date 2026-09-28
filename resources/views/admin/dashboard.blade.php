@@ -13,84 +13,19 @@
         </div>
     @endif
 
-    <!-- HEADER SIKLUS AKTIF BADGE -->
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4.5 sm:p-5 rounded-2xl border border-slate-200 shadow-2xs">
-        <div>
-            <h1 class="text-lg sm:text-xl font-black text-slate-900 tracking-tight">Dashboard Monitoring Bapperida</h1>
-            <p class="text-xs text-slate-500 font-medium mt-0.5">Pusat Pengendalian Evaluasi Teknis & Verifikasi Rencana Kerja Perangkat Daerah</p>
-        </div>
-        <div class="flex items-center space-x-2 self-start sm:self-auto shrink-0">
-            <span class="inline-flex items-center space-x-1.5 bg-blue-50 text-blue-800 border border-blue-200 px-3.5 py-1.5 rounded-xl text-xs font-extrabold shadow-2xs">
-                <i class="fa-solid fa-calendar-check text-blue-600"></i>
-                <span>Siklus Aktif TA {{ $activeTa ?? session('active_ta', date('Y')) }}</span>
-            </span>
-        </div>
+    <x-ui.page-heading :title="'Selamat Datang, '.(auth()->user()->nama_lengkap ?? 'Admin')" description="Pusat kendali dokumen perangkat daerah. Pantau penyusunan, verifikasi, dan arsip dalam satu ruang kerja." eyebrow="Bapperida Kabupaten Cirebon">
+        <x-slot:actions>
+            <x-ui.status-badge tone="blue" :label="'TA '.($activeTa ?? session('active_ta', date('Y')))" />
+            <a href="{{ route('admin.verifikasi.index') }}" class="st-btn st-btn-primary"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i> Tinjau Dokumen</a>
+        </x-slot:actions>
+    </x-ui.page-heading>
+    <div class="ed-stats">
+        <x-ui.statistic-card label="Total Dokumen" :value="$stats['total'] ?? 0" unit="Berkas" icon="fa-folder-open" note="Dokumen dalam siklus aktif" :href="route('renja.index')" />
+        <x-ui.statistic-card label="Dokumen Disetujui" :value="$stats['disetujui'] ?? 0" unit="Dokumen" tone="purple" icon="fa-file-circle-check" note="Selesai diverifikasi" :href="route('renja.fix.index')" />
+        <x-ui.statistic-card label="Menunggu Verifikasi" :value="$stats['menunggu'] ?? 0" unit="Dokumen" tone="red" icon="fa-clipboard-list" note="Membutuhkan pemeriksaan" :href="route('admin.verifikasi.index')" />
+        <x-ui.statistic-card label="Partisipasi OPD Daerah" :value="($opdStats['sudah_menyusun'] ?? 0).' / '.($opdStats['total_opd'] ?? 0)" unit="OPD" icon="fa-diagram-project" note="OPD yang telah berpartisipasi" :href="route('admin.monitoring-opd.index')" />
     </div>
-
-    <!-- ========================================== -->
-    <!-- 1. EXECUTIVE KPI CARDS (LEVEL 1 HIERARCHY) -->
-    <!-- ========================================== -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
-        
-        <!-- CARD 1: DOKUMEN DISETUJUI -->
-        <div class="st-card-v2 p-4 sm:p-5 border-l-4 border-l-emerald-600 flex items-center justify-between min-h-[105px]">
-            <div class="space-y-1 min-w-0 w-full">
-                <span class="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap overflow-hidden">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block shrink-0"></span>
-                    <span class="truncate">DOKUMEN DISETUJUI</span>
-                </span>
-                <div class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{{ $stats['disetujui'] ?? ($kpi['disetujui'] ?? 0) }}</div>
-                <div class="text-[10px] sm:text-[11px] text-emerald-600 font-bold block truncate">
-                    Disetujui & Final
-                </div>
-            </div>
-        </div>
-
-        <!-- CARD 2: MENUNGGU VERIFIKASI -->
-        <div class="st-card-v2 p-4 sm:p-5 border-l-4 border-l-blue-600 flex items-center justify-between min-h-[105px]">
-            <div class="space-y-1 min-w-0 w-full">
-                <span class="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap overflow-hidden">
-                    <span class="w-2 h-2 rounded-full bg-blue-600 inline-block shrink-0"></span>
-                    <span class="truncate">MENUNGGU VERIFIKASI</span>
-                </span>
-                <div class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{{ $stats['menunggu'] ?? ($kpi['menunggu'] ?? 0) }}</div>
-                <div class="text-[10px] sm:text-[11px] text-blue-600 font-bold block truncate">
-                    Proses Evaluasi Teknis
-                </div>
-            </div>
-        </div>
-
-        <!-- CARD 3: PERLU REVISI (CONSISTENT TERMINOLOGY) -->
-        <div class="st-card-v2 p-4 sm:p-5 border-l-4 border-l-amber-500 flex items-center justify-between min-h-[105px]">
-            <div class="space-y-1 min-w-0 w-full">
-                <span class="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap overflow-hidden">
-                    <span class="w-2 h-2 rounded-full bg-amber-500 inline-block shrink-0"></span>
-                    <span class="truncate">PERLU REVISI</span>
-                </span>
-                <div class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{{ $stats['revisi'] ?? ($kpi['revisi'] ?? 0) }}</div>
-                <div class="text-[10px] sm:text-[11px] text-amber-600 font-bold block truncate">
-                    Dikembalikan ke OPD
-                </div>
-            </div>
-        </div>
-
-        <!-- CARD 4: PARTISIPASI 71 OPD -->
-        <div class="st-card-v2 p-4 sm:p-5 border-l-4 border-l-indigo-600 flex items-center justify-between min-h-[105px]">
-            <div class="space-y-1 min-w-0 w-full">
-                <span class="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5 whitespace-nowrap overflow-hidden">
-                    <i class="fa-solid fa-building text-indigo-500 text-xs shrink-0"></i>
-                    <span class="truncate">PARTISIPASI 71 OPD</span>
-                </span>
-                <div class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                    {{ $opdStats['sudah_menyusun'] ?? 0 }} <span class="text-xs font-bold text-slate-400">/ {{ $opdStats['total_opd'] ?? 71 }}</span>
-                </div>
-                <div class="text-[10px] sm:text-[11px] text-indigo-600 font-bold block truncate">
-                    {{ round((($opdStats['sudah_menyusun'] ?? 0) / max($opdStats['total_opd'] ?? 71, 1)) * 100) }}% OPD Telah Menyusun
-                </div>
-            </div>
-        </div>
-
-    </div>
+    @include('components.ui.dashboard-charts', ['chartStats' => $stats, 'participation' => $opdStats])
 
     <!-- ========================================== -->
     <!-- 2. OPERATIONAL CORE WORKSPACE (GRID 8 vs 4 COLS) -->
@@ -98,7 +33,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
 
         <!-- LEFT COLUMN (8 COLS): TABEL ANTREAN UTAMA -->
-        <div class="lg:col-span-8 st-card-v2 p-5 sm:p-6 space-y-4">
+        <div class="lg:col-span-9 st-card-v2 p-5 sm:p-6 space-y-4">
             
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3.5">
                 <div>
@@ -111,7 +46,7 @@
             </div>
 
             <!-- LINEAR-STYLE QUICK COMMAND FILTER BAR -->
-            <form action="{{ route('admin.dashboard') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+            <x-ui.search-filter action="{{ route('admin.dashboard') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-12 gap-2">
                 <div class="sm:col-span-5 relative">
                     <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama OPD..." class="st-input pl-8 text-xs h-9.5 rounded-xl">
                     <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs absolute left-3 top-3"></i>
@@ -137,11 +72,11 @@
                         </a>
                     @endif
                 </div>
-            </form>
+            </x-ui.search-filter>
 
             <!-- HIGH-CONTRAST DATA FEED TABLE -->
             <div class="st-table-wrapper rounded-2xl border border-slate-200 overflow-x-auto">
-                <table class="w-full text-xs text-left text-slate-700 border-collapse">
+                <x-ui.data-table class="w-full text-xs text-left text-slate-700 border-collapse">
                     <thead class="bg-slate-50 text-slate-900 uppercase text-[10px] font-black tracking-wider border-b border-slate-200">
                         <tr>
                             <th class="p-3.5">Perangkat Daerah</th>
@@ -157,7 +92,7 @@
                                 <!-- OPD METADATA -->
                                 <td class="p-3.5 font-bold text-slate-900">
                                     <div class="flex items-center space-x-3">
-                                        <div class="w-8 h-8 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+                                        <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
                                             <i class="fa-solid fa-building text-xs"></i>
                                         </div>
                                         <div class="min-w-0">
@@ -189,9 +124,7 @@
 
                                 <!-- STATUS BADGE PILL -->
                                 <td class="p-3.5 text-center whitespace-nowrap">
-                                    <span class="{{ $doc->status_badge_class }} px-2.5 py-0.5 rounded-full font-black text-[9px] uppercase inline-block border">
-                                        {{ $doc->status_label }}
-                                    </span>
+                                    <x-ui.status-badge :status="$doc->status" :label="$doc->status_label" />
                                 </td>
 
                                 <!-- AKSI REVIEW -->
@@ -213,7 +146,7 @@
                             </tr>
                         @endforelse
                     </tbody>
-                </table>
+                </x-ui.data-table>
             </div>
 
             <!-- PAGINATION LINKS -->
@@ -224,7 +157,7 @@
         </div>
 
         <!-- RIGHT COLUMN (4 COLS): MONITORING 71 OPD + PRIORITAS + AKSES CEPAT -->
-        <div class="lg:col-span-4 space-y-5">
+        <div class="lg:col-span-3 space-y-5">
             
             <!-- PANEL RINGKASAN MONITORING 71 OPD (LEVEL 3 HIERARCHY) -->
             <div class="st-card-v2 p-4.5 sm:p-5 space-y-4 border-l-4 border-l-blue-600">

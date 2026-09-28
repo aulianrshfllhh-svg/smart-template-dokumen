@@ -69,11 +69,14 @@ class VerificationWorkspaceController extends Controller
         $request->validate([
             'decision_type' => 'required|in:simpan_draft,minta_revisi,setujui_dokumen',
             'sections' => 'nullable|array',
+            'sections.*' => 'array',
+            'sections.*.status' => 'required|in:PENDING,APPROVED,NEEDS_REVISION',
+            'sections.*.notes' => 'nullable|string|max:10000',
             'assigned_verificator_id' => 'nullable|exists:users,id',
             'catatan_bapperida' => 'nullable|string',
         ]);
 
-        $sectionsData = $request->input('sections', []);
+        $sectionsData = $request->input('sections') ?? [];
         $assignedVerificatorId = $request->input('assigned_verificator_id');
         $decisionType = $request->input('decision_type');
         $catatanBapperida = $request->input('catatan_bapperida');
@@ -94,6 +97,8 @@ class VerificationWorkspaceController extends Controller
             };
 
             return redirect()->route('admin.verifikasi.index')->with('success', $message);
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface | \Illuminate\Auth\Access\AuthorizationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
         }

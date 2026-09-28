@@ -73,13 +73,13 @@
                     <div class="text-[10px] font-black uppercase text-slate-400">Siklus Aktif</div>
                     <div class="text-xs font-black text-blue-800">TA {{ $activeYear }}–{{ $activeYear + 1 }}</div>
                 </div>
-                <form method="GET" action="{{ route('admin.monitoring-opd.show', $opd->id) }}">
+                <x-ui.search-filter method="GET" action="{{ route('admin.monitoring-opd.show', $opd->id) }}">
                     <select name="tahun_anggaran" onchange="this.form.submit()" class="st-select text-xs h-9 rounded-lg font-bold bg-white">
                         @foreach(range(2025, 2030) as $yOpt)
                             <option value="{{ $yOpt }}" {{ $activeYear == $yOpt ? 'selected' : '' }}>TA {{ $yOpt }}</option>
                         @endforeach
                     </select>
-                </form>
+                </x-ui.search-filter>
             </div>
         </div>
 
@@ -161,9 +161,7 @@
                             </div>
 
                             @if($hasDoc)
-                                <span class="{{ $doc->status_badge_class }} px-2.5 py-0.5 rounded-full font-black text-[9px] uppercase border shadow-2xs shrink-0">
-                                    {{ $doc->status_label }}
-                                </span>
+                                <x-ui.status-badge :status="$doc->status" :label="$doc->status_label" />
                             @else
                                 <span class="bg-slate-100 text-slate-500 border border-slate-200 px-2.5 py-0.5 rounded-full font-black text-[9px] uppercase shrink-0">
                                     Belum Dibuat

@@ -83,7 +83,7 @@
     <!-- MAIN SCHEMAS TABLE -->
     <div class="st-card p-5 sm:p-6 space-y-4">
         <div class="st-table-wrapper">
-            <table class="w-full text-left text-xs border-collapse">
+            <x-ui.data-table class="w-full text-left text-xs border-collapse">
                 <thead>
                     <tr class="bg-slate-50 text-slate-900 uppercase font-extrabold text-[10px] tracking-wider border-b border-slate-200">
                         <th class="p-3.5">Dokumen Acuan</th>
@@ -98,7 +98,7 @@
                         <tr class="hover:bg-slate-50/80 transition">
                             <td class="p-3.5 font-bold text-slate-900">
                                 <div class="flex items-center space-x-3">
-                                    <div class="w-8 h-8 rounded-lg bg-slate-900 text-amber-400 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
+                                    <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0 shadow-2xs">
                                         <i class="fa-solid fa-file-word"></i>
                                     </div>
                                     <div class="min-w-0">
@@ -152,7 +152,7 @@
                         </tr>
                     @endforelse
                 </tbody>
-            </table>
+            </x-ui.data-table>
         </div>
     </div>
 

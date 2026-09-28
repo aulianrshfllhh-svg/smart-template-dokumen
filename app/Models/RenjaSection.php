@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RenjaSection extends Model
 {
@@ -37,6 +38,34 @@ class RenjaSection extends Model
     public function templateSection(): BelongsTo
     {
         return $this->belongsTo(TemplateSection::class, 'template_section_id');
+    }
+
+    /**
+     * Caption untuk tabel dan gambar pada section ini.
+     */
+    public function captions(): HasMany
+    {
+        return $this->hasMany(RenjaSectionCaption::class, 'section_id')->orderBy('order_index');
+    }
+
+    /**
+     * Caption khusus tabel.
+     */
+    public function tableCaptions(): HasMany
+    {
+        return $this->hasMany(RenjaSectionCaption::class, 'section_id')
+            ->where('element_type', 'table')
+            ->orderBy('order_index');
+    }
+
+    /**
+     * Caption khusus gambar/figure.
+     */
+    public function figureCaptions(): HasMany
+    {
+        return $this->hasMany(RenjaSectionCaption::class, 'section_id')
+            ->where('element_type', 'figure')
+            ->orderBy('order_index');
     }
 
     public function getTitleAttribute()

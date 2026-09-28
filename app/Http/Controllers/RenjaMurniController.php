@@ -14,13 +14,16 @@ class RenjaMurniController extends Controller
 {
     protected DocumentTemplateService $templateService;
     protected RenjaMurniDocxService $docxService;
+    protected \App\Services\OpdDocumentService $opdDocumentService;
 
     public function __construct(
         DocumentTemplateService $templateService,
-        RenjaMurniDocxService $docxService
+        RenjaMurniDocxService $docxService,
+        \App\Services\OpdDocumentService $opdDocumentService
     ) {
         $this->templateService = $templateService;
         $this->docxService = $docxService;
+        $this->opdDocumentService = $opdDocumentService;
     }
 
     /**
@@ -42,7 +45,7 @@ class RenjaMurniController extends Controller
             ->where(function ($q) {
                 $q->where('jenis_dokumen', 'LIKE', '%Murni%')
                   ->orWhere('jenis_dokumen', 'LIKE', '%RENJA%');
-            });
+            })->where('jenis_dokumen', 'NOT LIKE', '%Perubahan%')->where('jenis_dokumen', 'NOT LIKE', '%Lampiran%')->where('jenis_dokumen', 'NOT LIKE', '%Perbup%')->where('jenis_dokumen', 'NOT LIKE', '%Kepbup%');
 
         if (!$user->isAdmin() && !$user->isVerifikator() && !$user->isStaff()) {
             $query->where('opd_id', $opdId);
@@ -91,7 +94,7 @@ class RenjaMurniController extends Controller
         $baseKpiQuery = RenjaDocument::where(function ($q) {
                 $q->where('jenis_dokumen', 'LIKE', '%Murni%')
                   ->orWhere('jenis_dokumen', 'LIKE', '%RENJA%');
-            })->where('tahun_anggaran', $request->filled('tahun_anggaran') && $request->tahun_anggaran !== 'all' ? (int)$request->tahun_anggaran : ($activeTa + 1));
+            })->where('jenis_dokumen', 'NOT LIKE', '%Perubahan%')->where('jenis_dokumen', 'NOT LIKE', '%Lampiran%')->where('jenis_dokumen', 'NOT LIKE', '%Perbup%')->where('jenis_dokumen', 'NOT LIKE', '%Kepbup%')->where('tahun_anggaran', $request->filled('tahun_anggaran') && $request->tahun_anggaran !== 'all' ? (int)$request->tahun_anggaran : ($activeTa + 1));
 
         if (!$user->isAdmin() && !$user->isVerifikator() && !$user->isStaff()) {
             $baseKpiQuery->where('opd_id', $opdId);
@@ -138,7 +141,7 @@ class RenjaMurniController extends Controller
             'template_code' => ['nullable', 'string'],
         ]);
 
-        $ta = (int) ($validated['tahun_anggaran'] ?? date('Y'));
+        $ta = (int) ($validated['tahun_anggaran'] ?? ((int) session('active_ta', date('Y')) + 1));
         $templateCode = $request->input('template_code', 'RENJA_MURNI');
 
         $this->templateService->ensureStandardTemplatesSeeded();
@@ -240,6 +243,45 @@ class RenjaMurniController extends Controller
     }
 
     /**
+     * Buat Dokumen RENJA Murni Baru dengan Menyalin RENJA Tahun Sebelumnya sebagai Acuan.
+     */
+    public function storeFromPreviousYear(Request $request)
+    {
+        $user = Auth::user();
+        $opdId = $this->getEffectiveOpdIdForUser($user);
+
+        $validated = $request->validate([
+            'source_document_id' => ['required', 'integer', 'exists:renja_documents,id'],
+            'tahun_anggaran' => ['required', 'integer', 'min:2020', 'max:2099'],
+        ], [
+            'source_document_id.required' => 'Dokumen acuan tahun sebelumnya wajib dipilih.',
+            'source_document_id.exists' => 'Dokumen acuan tidak ditemukan.',
+            'tahun_anggaran.required' => 'Tahun anggaran target wajib diisi.',
+        ]);
+
+        $sourceDocId = (int) $validated['source_document_id'];
+        $targetYear = (int) $validated['tahun_anggaran'];
+
+        try {
+            $document = $this->opdDocumentService->cloneFromPreviousYear(
+                $sourceDocId,
+                $targetYear,
+                $opdId,
+                $user->id
+            );
+
+            return redirect()->route('renja.editor', $document->id)
+                ->with('success', "Dokumen RENJA Murni TA {$targetYear} berhasil dibuat dari acuan tahun sebelumnya.");
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) {
+            throw $e;
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            abort(403, $e->getMessage());
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Gagal menyalin dokumen: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Upload Dokumen Word (.docx), Parse, Mapping Struktur & Simpan sebagai RENJA Murni OPD.
      * Setelah upload, redirect ke halaman validasi (alur lama, untuk editor-based workflow).
      */
@@ -270,6 +312,7 @@ class RenjaMurniController extends Controller
         $existingDraft = RenjaDocument::where('opd_id', $opdId)
             ->where('tahun_anggaran', $ta)
             ->where('jenis_dokumen', $jenisDokumen)
+            ->where('is_archived', false)
             ->whereIn('status', ['draft', 'belum_dikerjakan', 'perlu_revisi', 'revisi', 'revision'])
             ->orderBy('updated_at', 'desc')
             ->first();
@@ -285,7 +328,7 @@ class RenjaMurniController extends Controller
                 $existingDraft->delete();
             }
 
-            $redirectTa = (str_contains(strtolower($jenisDokumen), 'murni') || str_contains(strtolower($jenisDokumen), 'lampiran')) ? $ta - 1 : $ta;
+            $redirectTa = str_contains(strtolower($jenisDokumen), 'perubahan') ? $ta : $ta - 1;
 
             return redirect()->route('renja.workspace', ['tahun_anggaran' => $redirectTa])
                 ->with('success', "File Word berhasil diunggah dan disimpan sebagai draf untuk Dokumen {$jenisDokumen} TA {$ta}.");
@@ -329,17 +372,21 @@ class RenjaMurniController extends Controller
             ->where('tahun_anggaran', $ta)
             ->where(function ($q) {
                 $q->where('jenis_dokumen', 'LIKE', '%Murni%')
-                  ->orWhere('jenis_dokumen', 'LIKE', '%RENJA%')
-                  ->orWhere('jenis_dokumen', 'NOT LIKE', '%Perubahan%')
-                  ->orWhere('jenis_dokumen', 'NOT LIKE', '%Lampiran%');
+                  ->orWhere('jenis_dokumen', 'LIKE', '%RENJA%');
             })
+            ->where('jenis_dokumen', 'NOT LIKE', '%Perubahan%')
+            ->where('jenis_dokumen', 'NOT LIKE', '%Lampiran%')
+            ->where('jenis_dokumen', 'NOT LIKE', '%Perbup%')
+            ->where('jenis_dokumen', 'NOT LIKE', '%Perbub%')
+            ->where('jenis_dokumen', 'NOT LIKE', '%Kepbup%')
+            ->where('is_archived', false)
             ->whereIn('status', ['draft', 'belum_dikerjakan', 'perlu_revisi', 'revisi', 'revision'])
             ->orderBy('updated_at', 'desc')
             ->first();
 
         try {
             // Import dan parse file Word menjadi dokumen terstruktur
-            $document = $this->docxService->importDocx($file, $opdId, $ta, 'RENJA Murni', $existingDraft);
+            $document = $this->docxService->importDocx($file, $opdId, $ta, $existingDraft?->jenis_dokumen ?? 'RENJA Murni', $existingDraft);
 
             // Jika ada draft lama, hapus — dokumen baru dari Word menggantikannya
             if ($existingDraft && $existingDraft->id !== $document->id) {
@@ -369,7 +416,7 @@ class RenjaMurniController extends Controller
             ]);
 
             return redirect()
-                ->route('renja.workspace', ['tahun_anggaran' => $ta])
+                ->route('renja.workspace', ['tahun_anggaran' => $ta - 1])
                 ->with('success', "✅ Dokumen RENJA Murni TA {$ta} berhasil diunggah dan dikirimkan ke Bapperida Kabupaten Cirebon untuk ditinjau. Silakan tunggu hasil pemeriksaan.");
 
         } catch (\Throwable $e) {
@@ -507,6 +554,7 @@ class RenjaMurniController extends Controller
      */
     protected function getEffectiveOpdIdForUser($user)
     {
+        abort_if($user->isOperator() && !$user->opd_id, 403, 'Akun belum ditautkan ke OPD.');
         return $user->opd_id ?? MasterOpd::first()->id;
     }
 }

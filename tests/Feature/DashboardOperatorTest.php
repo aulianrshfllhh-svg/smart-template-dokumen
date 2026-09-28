@@ -181,7 +181,8 @@ class DashboardOperatorTest extends TestCase
         $response->assertSee('Akses Cepat');
         $response->assertSee('Buat Dokumen');
         $response->assertSee('Dokumen Saya');
-        $response->assertSee('Acuan Dokumen');
+        $response->assertSee('Template RENJA');
+        $response->assertDontSee('href="'.route('reference-documents.index').'"', false);
         $response->assertSee('Panduan');
     }
 

@@ -561,7 +561,7 @@
 
             <div class="toolbar-divider"></div>
 
-            <a href="{{ route('renja.workspace', ['tahun_anggaran' => $document->tahun_anggaran ?? session('active_ta', 2027)]) }}" class="toolbar-btn toolbar-btn-secondary" title="Kembali ke Workspace RENJA">
+            <a href="{{ route('renja.workspace', ['tahun_anggaran' => $document->tahun_anggaran ?? session('active_ta', (int) date('Y'))]) }}" class="toolbar-btn toolbar-btn-secondary" title="Kembali ke Workspace RENJA">
                 <i class="fa-solid fa-folder-tree"></i>
                 Workspace
             </a>
@@ -749,7 +749,7 @@
                 @foreach($babISections as $section)
                     <div class="subbab-heading">{{ $section->sub_bab_code }}. {{ $section->sub_bab_title }}</div>
                     <div class="section-content">
-                        {!! strip_tags($section->content ?? '<p>Belum ada isi.</p>', '<p><br><ol><ul><li><table><thead><tbody><tr><th><td><i><u><em><span><div><a>') !!}
+                        {!! app(\App\Services\DocumentHtmlService::class)->forDocumentDisplay($document, strip_tags($section->content ?? '<p>Belum ada isi.</p>', '<p><br><ol><ul><li><table><thead><tbody><tr><th><td><i><u><em><span><div><a>')) !!}
                     </div>
                 @endforeach
 
@@ -759,16 +759,16 @@
                         PENDAHULUAN
                     </div>
                     <div class="subbab-heading">1.1. Latar Belakang</div>
-                    {!! $document->latar_belakang ?? '<p>Belum ada isi latar belakang.</p>' !!}
+                    {!! app(\App\Services\DocumentHtmlService::class)->forDocumentDisplay($document, $document->latar_belakang ?? '<p>Belum ada isi latar belakang.</p>') !!}
 
                     <div class="subbab-heading">1.2. Landasan Hukum</div>
-                    {!! $document->landasan_hukum ?? '<p>Belum ada isi landasan hukum.</p>' !!}
+                    {!! app(\App\Services\DocumentHtmlService::class)->forDocumentDisplay($document, $document->landasan_hukum ?? '<p>Belum ada isi landasan hukum.</p>') !!}
 
                     <div class="subbab-heading">1.3. Maksud dan Tujuan</div>
-                    {!! $document->maksud_tujuan ?? '<p>Belum ada isi maksud dan tujuan.</p>' !!}
+                    {!! app(\App\Services\DocumentHtmlService::class)->forDocumentDisplay($document, $document->maksud_tujuan ?? '<p>Belum ada isi maksud dan tujuan.</p>') !!}
 
                     <div class="subbab-heading">1.4. Sistematika Penulisan</div>
-                    {!! $document->sistematika ?? '<p>Belum ada isi sistematika penulisan.</p>' !!}
+                    {!! app(\App\Services\DocumentHtmlService::class)->forDocumentDisplay($document, $document->sistematika ?? '<p>Belum ada isi sistematika penulisan.</p>') !!}
                 @endif
 
                 <span class="page-number">{{ $pageNum++ }}</span>
@@ -794,7 +794,7 @@
                         @foreach($babSections as $section)
                             <div class="subbab-heading">{{ $section->sub_bab_code }}. {{ $section->sub_bab_title }}</div>
                             <div class="section-content">
-                                {!! strip_tags($section->content ?? '<p>Belum ada isi.</p>', '<p><br><ol><ul><li><table><thead><tbody><tr><th><td><i><u><em><span><div><a>') !!}
+                                {!! app(\App\Services\DocumentHtmlService::class)->forDocumentDisplay($document, strip_tags($section->content ?? '<p>Belum ada isi.</p>', '<p><br><ol><ul><li><table><thead><tbody><tr><th><td><i><u><em><span><div><a>')) !!}
                             </div>
                         @endforeach
 
@@ -886,7 +886,7 @@
                         </div>
 
                         <div class="subbab-heading">2.1. Evaluasi Pelaksanaan Renja Perangkat Daerah</div>
-                        {!! $document->evaluasi_narasi ?? '<p>Berikut disajikan hasil evaluasi pelaksanaan Rencana Kerja Perangkat Daerah.</p>' !!}
+                        {!! app(\App\Services\DocumentHtmlService::class)->forDocumentDisplay($document, $document->evaluasi_narasi ?? '<p>Berikut disajikan hasil evaluasi pelaksanaan Rencana Kerja Perangkat Daerah.</p>') !!}
 
                         <table>
                             <thead>
@@ -928,7 +928,7 @@
                             ISU-ISU STRATEGIS PERANGKAT DAERAH
                         </div>
                         <div class="subbab-heading">3.1. Analisis Isu Strategis Perangkat Daerah</div>
-                        {!! $document->isu_strategis_narasi ?? '<p>Belum ada narasi isu strategis.</p>' !!}
+                        {!! app(\App\Services\DocumentHtmlService::class)->forDocumentDisplay($document, $document->isu_strategis_narasi ?? '<p>Belum ada narasi isu strategis.</p>') !!}
 
                         <span class="page-number">{{ $pageNum++ }}</span>
                     </div>
@@ -942,10 +942,10 @@
                         </div>
 
                         <div class="subbab-heading">4.1. Tujuan dan Sasaran Renja</div>
-                        {!! $document->tujuan_sasaran_narasi ?? '<p>Belum ada narasi tujuan dan sasaran.</p>' !!}
+                        {!! app(\App\Services\DocumentHtmlService::class)->forDocumentDisplay($document, $document->tujuan_sasaran_narasi ?? '<p>Belum ada narasi tujuan dan sasaran.</p>') !!}
 
                         <div class="subbab-heading">4.2. Rencana Program dan Kegiatan Utama</div>
-                        {!! $document->program_kegiatan_narasi ?? '<p>Rincian rencana program dan kegiatan disajikan pada tabel utama di bawah ini.</p>' !!}
+                        {!! app(\App\Services\DocumentHtmlService::class)->forDocumentDisplay($document, $document->program_kegiatan_narasi ?? '<p>Rincian rencana program dan kegiatan disajikan pada tabel utama di bawah ini.</p>') !!}
 
                         <table>
                             <thead>
@@ -987,7 +987,7 @@
                             PENUTUP
                         </div>
 
-                        {!! $document->penutup_narasi ?? '<p>Demikian Rencana Kerja Perangkat Daerah ini disusun sebagai pedoman dalam pelaksanaan program dan kegiatan pembangunan tahun anggaran mendatang demi terwujudnya tata kelola pemerintahan yang efektif dan sejahtera di Kabupaten Cirebon.</p>' !!}
+                        {!! app(\App\Services\DocumentHtmlService::class)->forDocumentDisplay($document, $document->penutup_narasi ?? '<p>Demikian Rencana Kerja Perangkat Daerah ini disusun sebagai pedoman dalam pelaksanaan program dan kegiatan pembangunan tahun anggaran mendatang demi terwujudnya tata kelola pemerintahan yang efektif dan sejahtera di Kabupaten Cirebon.</p>') !!}
 
                         <div style="margin-top: 36pt;">
                             <div class="signature-wrapper">

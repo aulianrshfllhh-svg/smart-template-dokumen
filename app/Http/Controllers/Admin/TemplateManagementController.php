@@ -154,6 +154,7 @@ class TemplateManagementController extends Controller
      */
     public function updateSection(Request $request, $id, $sectionId)
     {
+        \App\Models\TemplateSection::where('template_id', $id)->findOrFail($sectionId);
         $request->validate([
             'code' => 'required|string|max:50',
             'title' => 'required|string|max:255',
@@ -172,6 +173,7 @@ class TemplateManagementController extends Controller
      */
     public function destroySection($id, $sectionId)
     {
+        \App\Models\TemplateSection::where('template_id', $id)->findOrFail($sectionId);
         try {
             $this->templateService->deleteTemplateSection($sectionId);
             return back()->with('success', 'Seksi bab berhasil dihapus dari master template.');

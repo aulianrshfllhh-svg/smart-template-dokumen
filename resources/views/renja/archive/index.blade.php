@@ -33,71 +33,7 @@
     <!-- ========================================== -->
     <!-- 1. HEADER BANNER & REPOSITORY STATUS       -->
     <!-- ========================================== -->
-    <div class="st-card-v2 p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-l-4 border-l-cyan-500 bg-gradient-to-r from-white via-white to-cyan-50/20">
-        <div>
-            <!-- Breadcrumb Navigation Interaktif -->
-            <nav class="flex items-center space-x-2 text-[11px] font-black uppercase text-slate-400 mb-2 flex-wrap">
-                <a href="{{ route('renja.workspace') }}" class="hover:text-amber-600 transition">Dokumen Saya</a>
-                <span>/</span>
-                <a href="{{ route('renja.workspace') }}" class="hover:text-amber-600 transition">RENJA</a>
-                <span>/</span>
-                @if(!$selectedYear && !$selectedDocument)
-                    <span class="text-cyan-700">Arsip</span>
-                @else
-                    <a href="{{ route('renja.archive.index') }}" class="hover:text-cyan-600 text-slate-600 transition">
-                        Arsip
-                    </a>
-                    <span>/</span>
-                    @if($selectedYear && !$selectedDocument)
-                        <span class="text-cyan-700">TA {{ $selectedYear }}</span>
-                    @elseif($selectedDocument)
-                        <a href="{{ route('renja.archive.year', $selectedDocument->tahun_anggaran) }}" class="hover:text-cyan-600 text-slate-600 transition">
-                            TA {{ $selectedDocument->tahun_anggaran }}
-                        </a>
-                        <span>/</span>
-                        @if(!$activeBab)
-                            <span class="text-cyan-700">{{ $selectedDocument->jenis_dokumen }}</span>
-                        @else
-                            <a href="{{ route('renja.archive.document', $selectedDocument->id) }}" class="hover:text-cyan-600 text-slate-600 transition">
-                                {{ $selectedDocument->jenis_dokumen }}
-                            </a>
-                            <span>/</span>
-                            <span class="text-cyan-700">{{ $activeBab }}</span>
-                        @endif
-                    @endif
-                @endif
-            </nav>
-
-            <div class="flex items-center gap-3 flex-wrap">
-                <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                    <i class="fa-solid fa-box-archive text-cyan-600"></i>
-                    <span>Arsip RENJA</span>
-                    @if($selectedYear && !$selectedDocument)
-                        <span class="text-slate-400 font-normal text-base sm:text-lg">/ Folder TA {{ $selectedYear }}</span>
-                    @elseif($selectedDocument)
-                        <span class="text-slate-400 font-normal text-base sm:text-lg">/ {{ $selectedDocument->jenis_dokumen }} TA {{ $selectedDocument->tahun_anggaran }}</span>
-                    @endif
-                </h1>
-
-                <!-- Badge Status Resmi Repository Arsip -->
-                <span class="px-3 py-1 rounded-full text-[10px] font-black tracking-wider uppercase bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1.5 shadow-2xs">
-                    <i class="fa-solid fa-circle-check text-emerald-600"></i>
-                    <span>REPOSITORY FINAL</span>
-                </span>
-            </div>
-
-            <p class="text-xs text-slate-500 font-medium mt-1">
-                Dokumen RENJA yang telah disetujui dan ditetapkan sebagai dokumen final oleh Bapperida.
-            </p>
-        </div>
-
-        <div class="flex items-center space-x-3 shrink-0">
-            <a href="{{ route('renja.workspace') }}" class="st-btn st-btn-outline st-btn-sm font-bold text-xs">
-                <i class="fa-solid fa-folder-tree text-amber-500"></i>
-                <span>Workspace TA Aktif</span>
-            </a>
-        </div>
-    </div>
+    <x-ui.page-heading title="Arsip Dokumen" description="Dokumen RENJA yang telah disetujui, tersusun berdasarkan tahun anggaran dan perangkat daerah." eyebrow="Kearsipan digital"><x-slot:actions><x-ui.status-badge tone="green" label="Dokumen Final" /><a href="{{ route('renja.workspace') }}" class="st-btn st-btn-secondary">Buka Ruang Kerja</a></x-slot:actions></x-ui.page-heading>
 
     <!-- ========================================== -->
     <!-- 2. BANNER INFORMASI PENGESAHAN DOKUMEN     -->
@@ -182,7 +118,7 @@
     <!-- 3. TOOLBAR (SEARCH, FILTER, SORT, VIEW)    -->
     <!-- ========================================== -->
     <div class="st-card-v2 p-4 sm:p-5 space-y-4">
-        <form method="GET" action="{{ route('renja.archive.index') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+        <x-ui.search-filter method="GET" action="{{ route('renja.archive.index') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3">
             @if($selectedDocument)
                 <input type="hidden" name="document_id" value="{{ $selectedDocument->id }}">
             @endif
@@ -249,7 +185,7 @@
                     </button>
                 </div>
             </div>
-        </form>
+        </x-ui.search-filter>
     </div>
 
     <!-- ========================================== -->
@@ -347,7 +283,7 @@
             @else
                 <!-- LIST VIEW (DEFAULT) -->
                 <div x-show="viewMode === 'list'" class="st-table-wrapper rounded-2xl border border-slate-200">
-                    <table class="w-full text-xs text-left text-slate-700 border-collapse">
+                    <x-ui.data-table class="w-full text-xs text-left text-slate-700 border-collapse">
                         <thead class="bg-slate-900 text-white uppercase text-[10px] font-black tracking-wider border-b border-slate-800">
                             <tr>
                                 <th class="p-3.5">Folder Tahun Anggaran</th>
@@ -407,34 +343,16 @@
                                 </tr>
                             @endforeach
                         </tbody>
-                    </table>
+                    </x-ui.data-table>
                 </div>
 
                 <!-- GRID VIEW ROOT -->
                 <div x-show="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     @foreach($documentsByYear as $year => $docs)
-                        <div class="st-card-v2 p-5 border-t-4 border-t-cyan-500 hover:shadow-md transition flex flex-col justify-between group">
-                            <div>
-                                <div class="flex items-center justify-between mb-3">
-                                    <div class="w-12 h-12 rounded-2xl bg-cyan-50 text-cyan-600 border border-cyan-200 flex items-center justify-center text-xl font-black group-hover:bg-cyan-600 group-hover:text-white transition">
-                                        <i class="fa-solid fa-folder"></i>
-                                    </div>
-                                    <span class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-0.5 rounded-full font-black text-[9px] uppercase">
-                                        ✓ FINAL
-                                    </span>
-                                </div>
-                                <h3 class="text-sm font-black text-slate-900 leading-snug group-hover:text-cyan-700 transition">
-                                    📁 Arsip TA {{ $year }}
-                                </h3>
-                                <p class="text-[11px] text-slate-400 font-medium mt-1">
-                                    Berisi {{ $docs->count() }} dokumen perencanaan historis
-                                </p>
-                            </div>
-                            <a href="{{ route('renja.archive.year', $year) }}" class="mt-4 st-btn bg-cyan-600 hover:bg-cyan-700 text-white font-black text-xs py-2 rounded-xl text-center shadow-xs">
-                                <i class="fa-solid fa-folder-open"></i>
-                                <span>Buka Folder TA {{ $year }}</span>
-                            </a>
-                        </div>
+                        <x-ui.document-card :title="'Arsip TA '.$year" :description="$docs->count().' dokumen final'" :href="route('renja.archive.year', $year)" icon="fa-folder" tone="blue">
+    <x-slot:badge><x-ui.status-badge label="Arsip" tone="green" /></x-slot:badge>
+    <x-slot:actions><span>Tahun anggaran {{ $year }}</span><a href="{{ route('renja.archive.year', $year) }}" class="text-blue-600">Buka Folder <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></x-slot:actions>
+    </x-ui.document-card>
                     @endforeach
                 </div>
             @endif
@@ -455,7 +373,7 @@
             @else
                 <!-- LIST VIEW DOKUMEN ARSIP -->
                 <div x-show="viewMode === 'list'" class="st-table-wrapper rounded-2xl border border-slate-200">
-                    <table class="w-full text-xs text-left text-slate-700 border-collapse">
+                    <x-ui.data-table class="w-full text-xs text-left text-slate-700 border-collapse">
                         <thead class="bg-slate-900 text-white uppercase text-[10px] font-black tracking-wider border-b border-slate-800">
                             <tr>
                                 <th class="p-3.5">Nama Dokumen</th>
@@ -551,7 +469,7 @@
                                 </tr>
                             @endforeach
                         </tbody>
-                    </table>
+                    </x-ui.data-table>
                 </div>
 
                 <!-- GRID VIEW LEVEL 2 -->
@@ -602,7 +520,7 @@
             @if(!$activeBab)
                 <!-- LEVEL 3: FOLDER BAB & FILE ITEM DI DALAM DOKUMEN ARSIP -->
                 <div x-show="viewMode === 'list'" class="st-table-wrapper rounded-2xl border border-slate-200">
-                    <table class="w-full text-xs text-left text-slate-700 border-collapse">
+                    <x-ui.data-table class="w-full text-xs text-left text-slate-700 border-collapse">
                         <thead class="bg-slate-900 text-white uppercase text-[10px] font-black tracking-wider border-b border-slate-800">
                             <tr>
                                 <th class="p-3.5">Nama Item</th>
@@ -679,7 +597,7 @@
                                 </tr>
                             @endforeach
                         </tbody>
-                    </table>
+                    </x-ui.data-table>
                 </div>
 
                 <!-- GRID VIEW LEVEL 3 -->
@@ -717,7 +635,7 @@
                 @endphp
 
                 <div x-show="viewMode === 'list'" class="st-table-wrapper rounded-2xl border border-slate-200">
-                    <table class="w-full text-xs text-left text-slate-700 border-collapse">
+                    <x-ui.data-table class="w-full text-xs text-left text-slate-700 border-collapse">
                         <thead class="bg-slate-900 text-white uppercase text-[10px] font-black tracking-wider border-b border-slate-800">
                             <tr>
                                 <th class="p-3.5">Kode & Judul Sub-bab</th>
@@ -777,7 +695,7 @@
                                 </tr>
                             @endforelse
                         </tbody>
-                    </table>
+                    </x-ui.data-table>
                 </div>
 
                 <!-- GRID VIEW SUB-BAB -->

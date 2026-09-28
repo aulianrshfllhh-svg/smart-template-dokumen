@@ -20,7 +20,7 @@ class StripBoldTags
         array_walk_recursive($input, function (&$value) {
             if (is_string($value)) {
                 // Remove HTML bold tags <b>, </b>, <strong>, </strong> (case insensitive)
-                $value = preg_replace('/<\/?(b|strong)[^>]*>/i', '', $value);
+                $value = preg_replace('/<\/?(b|strong)\b[^>]*>/i', '', $value);
                 
                 // Remove inline CSS font-weight: bold / 700 / etc.
                 $value = preg_replace('/font-weight\s*:\s*(bold|[5-9]00)\s*;?/i', '', $value);

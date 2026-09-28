@@ -106,7 +106,7 @@
     <!-- 3. FILTER & SEARCH BAR                     -->
     <!-- ========================================== -->
     <div class="st-card-v2 p-4 sm:p-5">
-        <form method="GET" action="{{ route('operator.renja-murni.index') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+        <x-ui.search-filter method="GET" action="{{ route('operator.renja-murni.index') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3">
             
             <!-- SEARCH -->
             <div class="sm:col-span-4 relative">
@@ -158,7 +158,7 @@
                 </a>
             </div>
 
-        </form>
+        </x-ui.search-filter>
     </div>
 
     <!-- ========================================== -->
@@ -166,7 +166,7 @@
     <!-- ========================================== -->
     <div class="st-card-v2 overflow-hidden">
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
+            <x-ui.data-table class="w-full text-left text-xs">
                 <thead class="bg-slate-50 text-slate-600 font-extrabold uppercase text-[10px] tracking-wider border-b border-slate-200">
                     <tr>
                         <th class="py-3.5 px-4">Tahun Anggaran</th>
@@ -330,7 +330,7 @@
                         </tr>
                     @endforelse
                 </tbody>
-            </table>
+            </x-ui.data-table>
         </div>
 
         @if($documents->hasPages())
@@ -346,7 +346,7 @@
     <div x-show="modalTambahOpen" 
          x-cloak
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs transition-opacity duration-200"
-         x-data="{ selectedTa: '{{ session('active_ta', 2027) }}' }">
+         x-data="{ selectedTa: '{{ session('active_ta', (int) date('Y')) }}' }">
         
         <div class="bg-white rounded-3xl shadow-2xl max-w-xl w-full p-6 sm:p-7 space-y-5 transform transition-all border border-slate-100"
              @click.away="modalTambahOpen = false">
@@ -407,9 +407,9 @@
 
                     <div class="pt-2 border-t border-amber-200/60 flex flex-col sm:flex-row items-center justify-between gap-3">
                         <span class="text-[11px] font-bold text-amber-900">
-                            Tahun Anggaran {{ session('active_ta', 2027) }}
+                            Tahun Anggaran {{ session('active_ta', (int) date('Y')) }}
                         </span>
-                        <a href="{{ route('renja.templates.download', ['templateCode' => 'RENJA_MURNI', 'tahun_anggaran' => session('active_ta', 2027)]) }}"
+                        <a href="{{ route('renja.templates.download', ['templateCode' => 'RENJA_MURNI', 'tahun_anggaran' => session('active_ta', (int) date('Y'))]) }}"
                            class="st-btn st-btn-amber font-black text-xs py-2.5 px-5 rounded-xl shadow-md flex items-center justify-center gap-2 w-full sm:w-auto">
                             <i class="fa-solid fa-download text-xs"></i>
                             <span>Download Template Word</span>
@@ -425,7 +425,7 @@
                     </div>
                     <form method="POST" action="{{ route('operator.renja-murni.store-template') }}">
                         @csrf
-                        <input type="hidden" name="tahun_anggaran" value="{{ session('active_ta', 2027) }}">
+                        <input type="hidden" name="tahun_anggaran" value="{{ session('active_ta', (int) date('Y')) }}">
                         <button type="submit" class="st-btn bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2 px-3.5 rounded-xl whitespace-nowrap cursor-pointer">
                             <span>Buat Online</span>
                         </button>
@@ -444,7 +444,7 @@
                         <label for="ta_upload" class="block text-xs font-black text-slate-700">Tahun Anggaran</label>
                         <select id="ta_upload" name="tahun_anggaran" class="st-select text-xs font-black h-11 rounded-xl w-full" required>
                             @foreach(range(2025, 2035) as $y)
-                                <option value="{{ $y }}" {{ ($y == 2027 || $y == session('active_ta', 2027)) ? 'selected' : '' }}>
+                                <option value="{{ $y }}" {{ ($y == 2027 || $y == session('active_ta', (int) date('Y'))) ? 'selected' : '' }}>
                                     Tahun Anggaran {{ $y }}
                                 </option>
                             @endforeach

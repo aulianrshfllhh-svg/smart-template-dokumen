@@ -56,15 +56,18 @@ Route::middleware(['auth'])->group(function () {
 
     // Switch Active Tahun Anggaran (TA) Session
     Route::match(['get', 'post'], '/set-active-ta', function (\Illuminate\Http\Request $request) {
-        $ta = (int) $request->input('tahun_anggaran', 2027);
+        $ta = (int) $request->input('tahun_anggaran', (int) date('Y'));
         if ($ta < 2020 || $ta > 2040) {
-            $ta = 2027;
+            $ta = (int) date('Y');
         }
         session(['active_ta' => $ta]);
 
         $referer = $request->headers->get('referer');
         if ($referer) {
             $parsed = parse_url($referer);
+            if (!$parsed || ($parsed['host'] ?? '') !== $request->getHost() || ($parsed['scheme'] ?? '') !== $request->getScheme() || (int) ($parsed['port'] ?? ($request->isSecure() ? 443 : 80)) !== $request->getPort()) {
+                return redirect()->route('dashboard')->with('success', "Tahun Anggaran aktif berhasil diubah ke {$ta}.");
+            }
             $queryParams = [];
             if (!empty($parsed['query'])) {
                 parse_str($parsed['query'], $queryParams);
@@ -88,12 +91,12 @@ Route::middleware(['auth'])->group(function () {
             }
         }
 
-        return back()->with('success', "Tahun Anggaran (TA) aktif berhasil diubah ke {$ta}.");
+        return redirect()->route('dashboard')->with('success', "Tahun Anggaran (TA) aktif berhasil diubah ke {$ta}.");
     })->name('set-ta');
 
     // Modul C: Monitoring & Verifikasi Pengawasan Bapperida
     Route::get('/bapperida/monitoring', [BapperidaMonitoringController::class, 'index'])
-        ->name('bapperida.monitoring');
+        ->middleware(EnsureRole::class . ':admin,verifikator,staff')->name('bapperida.monitoring');
 
     Route::get('/renja-documents', [RenjaDocumentController::class, 'index'])
         ->name('renja.index');
@@ -147,6 +150,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/renja-documents/generate-lampiran', [RenjaDocumentController::class, 'generateLampiran'])
         ->name('renja.generateLampiran');
+
+    Route::post('/renja-documents/clone-previous', [RenjaDocumentController::class, 'cloneFromPreviousYear'])
+        ->name('renja.clonePrevious');
 
 
     Route::get('/renja-documents/create', [RenjaDocumentController::class, 'create'])
@@ -221,6 +227,9 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/renja-documents/{id}/sections/{sectionId}', [RenjaEditorController::class, 'deleteSection'])
         ->name('renja.editor.deleteSection');
 
+    Route::delete('/renja-documents/{id}/all-sections', [RenjaEditorController::class, 'deleteAllSubBab'])
+        ->name('renja.editor.deleteAllSubBab');
+
     Route::post('/renja-documents/{id}/add-bab', [RenjaEditorController::class, 'addBab'])
         ->name('renja.editor.addBab');
 
@@ -229,9 +238,6 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/renja-documents/{id}/front-matter', [RenjaEditorController::class, 'addFrontMatter'])
         ->name('renja.editor.addFrontMatter');
-
-    Route::post('/renja-documents/{id}/sections/{sectionId}/acuan', [RenjaEditorController::class, 'loadAcuanDraft'])
-        ->name('renja.editor.acuan');
 
     Route::post('/renja-documents/{id}/sections/{sectionId}/autofix', [RenjaEditorController::class, 'autofixSection'])
         ->name('renja.section.autofix');
@@ -247,6 +253,18 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/renja-documents/{id}/sipd', [RenjaEditorController::class, 'addTableEval'])
         ->name('renja.editor.addTableEval');
+
+    Route::get('/renja-documents/{id}/editor/export-word', [RenjaEditorController::class, 'exportWord'])
+        ->name('renja.editor.exportWord');
+
+    Route::get('/renja-documents/{id}/editor/export-pdf', [RenjaEditorController::class, 'exportPdf'])
+        ->name('renja.editor.exportPdf');
+
+    Route::post('/renja-documents/{id}/sections/{sectionId}/caption', [RenjaEditorController::class, 'saveCaption'])
+        ->name('renja.editor.saveCaption');
+
+    Route::post('/renja-documents/{id}/refresh-indexes', [RenjaEditorController::class, 'refreshIndexes'])
+        ->name('renja.editor.refreshIndexes');
 
     Route::delete('/renja-documents/{id}', [RenjaDocumentController::class, 'destroy'])
         ->name('renja.destroy');
@@ -268,25 +286,27 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/formatter/download/{filename}', [DocumentFormatterController::class, 'downloadFile'])
         ->name('formatter.download');
 
-    // Auto-Detect Modul dari Dokumen Acuan (Reference Documents)
-    Route::get('/reference-documents', [ReferenceDocumentController::class, 'index'])
-        ->name('reference-documents.index');
-    Route::get('/reference-documents/create', [ReferenceDocumentController::class, 'create'])
-        ->name('reference-documents.create');
-    Route::post('/reference-documents', [ReferenceDocumentController::class, 'store'])
-        ->name('reference-documents.store');
-    Route::get('/reference-documents/{id}', [ReferenceDocumentController::class, 'show'])
-        ->name('reference-documents.show');
-    Route::post('/reference-documents/{id}/approve', [ReferenceDocumentController::class, 'approve'])
-        ->name('reference-documents.approve');
-    Route::post('/reference-documents/{id}/reject', [ReferenceDocumentController::class, 'reject'])
-        ->name('reference-documents.reject');
-    Route::post('/reference-documents/{id}/apply', [ReferenceDocumentController::class, 'applyToDocument'])
-        ->name('reference-documents.apply');
-    Route::post('/reference-documents/sub-chapter/{id}', [ReferenceDocumentController::class, 'updateSubChapter'])
-        ->name('reference-documents.updateSubChapter');
-    Route::delete('/reference-documents/{id}', [ReferenceDocumentController::class, 'destroy'])
-        ->name('reference-documents.destroy');
+    // Auto-Detect Modul dari Dokumen Acuan (Reference Documents) - Khusus Role Admin/Bapperida
+    Route::middleware([EnsureRole::class . ':admin,verifikator,staff'])->group(function () {
+        Route::get('/reference-documents', [ReferenceDocumentController::class, 'index'])
+            ->name('reference-documents.index');
+        Route::get('/reference-documents/create', [ReferenceDocumentController::class, 'create'])
+            ->name('reference-documents.create');
+        Route::post('/reference-documents', [ReferenceDocumentController::class, 'store'])
+            ->name('reference-documents.store');
+        Route::get('/reference-documents/{id}', [ReferenceDocumentController::class, 'show'])
+            ->name('reference-documents.show');
+        Route::post('/reference-documents/{id}/approve', [ReferenceDocumentController::class, 'approve'])
+            ->name('reference-documents.approve');
+        Route::post('/reference-documents/{id}/reject', [ReferenceDocumentController::class, 'reject'])
+            ->name('reference-documents.reject');
+        Route::post('/reference-documents/{id}/apply', [ReferenceDocumentController::class, 'applyToDocument'])
+            ->name('reference-documents.apply');
+        Route::post('/reference-documents/sub-chapter/{id}', [ReferenceDocumentController::class, 'updateSubChapter'])
+            ->name('reference-documents.updateSubChapter');
+        Route::delete('/reference-documents/{id}', [ReferenceDocumentController::class, 'destroy'])
+            ->name('reference-documents.destroy');
+    });
 
     // Modul Dokumen RKPD (Rencana Kerja Pemerintah Daerah)
     Route::get('/rkpd-documents', [\App\Http\Controllers\RkpdDocumentController::class, 'index'])
@@ -307,6 +327,7 @@ Route::middleware(['auth'])->group(function () {
         // Modul RENJA Murni (Dokumen Saya > RENJA Murni)
         Route::get('/renja-murni', [RenjaMurniController::class, 'index'])->name('renja-murni.index');
         Route::post('/renja-murni/template', [RenjaMurniController::class, 'storeFromTemplate'])->name('renja-murni.store-template');
+        Route::post('/renja-murni/clone-previous', [RenjaMurniController::class, 'storeFromPreviousYear'])->name('renja-murni.clone-previous');
         Route::post('/renja-murni/upload', [RenjaMurniController::class, 'storeUpload'])->name('renja-murni.store-upload');
         Route::post('/renja-murni/upload-submit', [RenjaMurniController::class, 'uploadAndSubmit'])->name('renja-murni.upload-submit');
         Route::get('/renja-murni/{id}/validate', [RenjaMurniController::class, 'showValidation'])->name('renja-murni.validate');
@@ -329,7 +350,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/renja/{id}/add-bab', [RenjaEditorController::class, 'addBab'])->name('renja.editor.addBab');
         Route::post('/renja/{id}/add-sub-bab', [RenjaEditorController::class, 'addSubBab'])->name('renja.editor.addSubBab');
         Route::delete('/renja/{id}/sections/{sectionId}', [RenjaEditorController::class, 'deleteSection'])->name('renja.editor.deleteSection');
-        Route::post('/renja/{id}/sections/{sectionId}/acuan', [RenjaEditorController::class, 'loadAcuanDraft'])->name('renja.editor.acuan');
         Route::post('/renja/{id}/sipd', [RenjaEditorController::class, 'addTableEval'])->name('renja.editor.addTableEval');
 
         // Apply "StripBoldTags" middleware to strip bold elements on store and update
@@ -371,10 +391,15 @@ Route::middleware(['auth'])->group(function () {
     });
 
     Route::middleware([EnsureRole::class . ':admin,verifikator,staff'])->group(function () {
-        Route::get('/admin/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('admin.dashboard');
+        Route::get('/admin/dashboard', [AdminController::class, 'adminDashboard'])->name('admin.dashboard');
     });
-    Route::get('/admin/review/{id}', [AdminController::class, 'reviewDocument'])->name('admin.review');
-    Route::post('/admin/review/{id}/decision', [AdminController::class, 'processDecision'])->name('admin.decision');
+    Route::get('/admin/review/{id}', [AdminController::class, 'reviewDocument'])->middleware(EnsureRole::class . ':admin,verifikator,staff')->name('admin.review');
+    Route::post('/admin/review/{id}/decision', [AdminController::class, 'processDecision'])->middleware(EnsureRole::class . ':admin,verifikator,staff')->name('admin.decision');
+
+    Route::middleware([EnsureRole::class . ':admin,verifikator,staff'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/monitoring-opd', [OpdMonitoringController::class, 'index'])->name('monitoring-opd.index');
+        Route::get('/monitoring-opd/{opd}', [OpdMonitoringController::class, 'show'])->name('monitoring-opd.show');
+    });
 
     // Verifikator Dedicated Routes
     Route::get('/verifikator/dashboard', [DashboardController::class, 'verifikatorDashboard'])->name('verifikator.dashboard');
@@ -387,7 +412,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/staff/dashboard', [DashboardController::class, 'staffDashboard'])->name('staff.dashboard');
 
     // Pimpinan Executive Dedicated Routes
-    Route::get('/pimpinan/dashboard', [DashboardController::class, 'pimpinanDashboard'])->name('pimpinan.dashboard');
+    Route::get('/pimpinan/dashboard', [DashboardController::class, 'pimpinanDashboard'])->middleware(EnsureRole::class . ':pimpinan')->name('pimpinan.dashboard');
 
     /*
     |--------------------------------------------------------------------------
@@ -395,9 +420,7 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::middleware([EnsureRole::class . ':admin'])->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/dashboard', [AdminController::class, 'adminDashboard'])->name('dashboard');
-        Route::get('/review/{id}', [AdminController::class, 'reviewDocument'])->name('review');
-        Route::post('/review/{id}/decision', [AdminController::class, 'processDecision'])->name('decision');
+        Route::get('/documents', [RenjaDocumentController::class, 'adminMyDocuments'])->name('documents.index');
         Route::get('/renja/{id}', [RenjaDocumentController::class, 'show'])->name('renja.show');
         Route::post('/renja/{id}/status', [RenjaDocumentController::class, 'updateStatus'])->name('renja.updateStatus');
 
@@ -410,8 +433,6 @@ Route::middleware(['auth'])->group(function () {
         })->name('master_nomenklatur.index');
 
         // Modul Monitoring OPD (Pantau Seluruh OPD & Progres Dokumen)
-        Route::get('/monitoring-opd', [OpdMonitoringController::class, 'index'])->name('monitoring-opd.index');
-        Route::get('/monitoring-opd/{opd}', [OpdMonitoringController::class, 'show'])->name('monitoring-opd.show');
     });
 
 });

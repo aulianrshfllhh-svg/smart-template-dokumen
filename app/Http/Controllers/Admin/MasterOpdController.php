@@ -15,7 +15,7 @@ class MasterOpdController extends Controller
     public function index(Request $request)
     {
         $search = trim($request->input('search', ''));
-        $tahunAnggaran = (int) $request->input('tahun_anggaran', session('active_ta', 2027));
+        $tahunAnggaran = (int) $request->input('tahun_anggaran', session('active_ta', (int) date('Y')));
 
         $opds = MasterOpd::with(['users'])
             ->withCount(['renjaDocuments' => function ($q) use ($tahunAnggaran) {

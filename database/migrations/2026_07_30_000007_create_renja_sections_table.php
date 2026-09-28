@@ -22,6 +22,7 @@ return new class extends Migration
             $table->text('guidance_text')->nullable();
             $table->boolean('is_completed')->default(false);
             $table->integer('order_index')->default(0);
+            $table->boolean('is_manual')->default(false);
             $table->timestamps();
         });
     }

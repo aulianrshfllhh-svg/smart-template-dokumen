@@ -74,7 +74,7 @@ class DashboardAdminService
         $belumMenyusun = max(0, $totalOpd - $sudahMenyusun);
 
         return [
-            'total_opd' => $totalOpd > 0 ? $totalOpd : 71,
+            'total_opd' => $totalOpd,
             'sudah_menyusun' => $sudahMenyusun,
             'belum_menyusun' => $belumMenyusun,
             'percentage' => round(($sudahMenyusun / max($totalOpd, 1)) * 100),
@@ -87,7 +87,7 @@ class DashboardAdminService
     public function calculatePriorityScore(RenjaDocument $document): int
     {
         $submittedAt = $document->submitted_at ?? $document->created_at;
-        $daysWaiting = max(0, (int) now()->diffInDays($submittedAt));
+        $daysWaiting = max(0, (int) $submittedAt->diffInDays(now()));
         $revisionCount = $document->revision_count ?? 0;
 
         // Bobot OPD Strategis
@@ -119,7 +119,7 @@ class DashboardAdminService
             ->whereIn('status', ['menunggu_pemeriksaan', 'menunggu_verifikasi', 'submitted', 'dikirim_ulang', 'sedang_diperiksa']);
         \App\Services\RenjaCycleService::applyActiveCycleFilter($query, $activeYear);
 
-        $documents = $query->get();
+        $documents = $query->withCount(['sections', 'sections as completed_sections_count' => fn ($q) => $q->where('is_completed', true)])->get();
 
         foreach ($documents as $doc) {
             $computedScore = $this->calculatePriorityScore($doc);

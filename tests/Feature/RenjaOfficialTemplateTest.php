@@ -57,7 +57,7 @@ class RenjaOfficialTemplateTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_provides_official_renja_murni_and_perubahan_templates_for_download()
     {
         // 1. Download Template RENJA Murni
@@ -81,7 +81,7 @@ class RenjaOfficialTemplateTest extends TestCase
         $this->assertEquals($initialDocCount, RenjaDocument::count(), 'Download template tidak boleh membuat record dokumen di database.');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_protects_against_cross_opd_tampering_during_template_download()
     {
         // Operator OPD A mencoba mendownload template dengan parameter opd_id milik OPD B
@@ -95,7 +95,7 @@ class RenjaOfficialTemplateTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_personalizes_template_with_authenticated_opd_data_without_modifying_master_template()
     {
         $masterMurni = DocumentTemplate::where('code', 'RENJA_MURNI')->first();
@@ -120,7 +120,7 @@ class RenjaOfficialTemplateTest extends TestCase
         }
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_imports_docx_preserving_narrative_markers_tables_and_bab_structure()
     {
         Storage::fake('local');

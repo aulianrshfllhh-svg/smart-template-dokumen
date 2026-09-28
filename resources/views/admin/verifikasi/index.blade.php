@@ -16,195 +16,22 @@
     <!-- ========================================== -->
     <!-- 1. WORKSPACE HEADER BANNER & QUICK STATS -->
     <!-- ========================================== -->
-    <div class="st-card-v2 p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-l-4 border-l-amber-500">
-        <div>
-            <div class="inline-flex items-center space-x-2 bg-amber-500/10 text-amber-900 border border-amber-500/30 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider mb-2">
-                <i class="fa-solid fa-briefcase text-xs"></i>
-                <span>WORKSPACE VERIFIKASI ADMIN BAPPERIDA</span>
-            </div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-                Ruang Kerja Verifikasi Dokumen Daerah
-            </h1>
-            <p class="text-xs text-slate-500 font-medium mt-1 max-w-3xl">
-                Proses pengajuan dokumen Rencana Kerja (Renja) dari 71 Perangkat Daerah se-Kabupaten Cirebon. Tinjau kelayakan bab F4, berikan catatan revisi, dan terbitkan persetujuan sah.
-            </p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2.5 shrink-0">
-            <!-- QUICK STATS WIDGET (LANGKAH 3D) -->
-            <div class="hidden sm:flex items-center space-x-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200 text-[11px] font-bold">
-                <span class="px-2 py-0.5 bg-white rounded-lg text-slate-800 border border-slate-200/80 shadow-2xs" title="Aktivitas Hari Ini">
-                    <i class="fa-solid fa-calendar-day text-amber-500 mr-1 text-[10px]"></i>Hari ini: <strong class="text-slate-900">{{ $quickStats['today'] ?? 0 }}</strong>
-                </span>
-                <span class="px-2 py-0.5 bg-white rounded-lg text-slate-800 border border-slate-200/80 shadow-2xs" title="Aktivitas Minggu Ini">
-                    <i class="fa-solid fa-calendar-week text-blue-500 mr-1 text-[10px]"></i>Minggu ini: <strong class="text-slate-900">{{ $quickStats['this_week'] ?? 0 }}</strong>
-                </span>
-            </div>
-
-            <!-- REFRESH WORKSPACE BUTTON (LANGKAH 3E) -->
-            <button @click="loading = true; window.location.reload()" 
-                    class="st-btn st-btn-secondary st-btn-sm text-xs rounded-xl font-bold px-3 py-2 flex items-center space-x-1.5 shadow-xs" 
-                    title="Refresh Data Workspace (Pertahankan Filter)">
-                <i class="fa-solid fa-rotate text-xs text-slate-600" :class="loading ? 'animate-spin text-amber-500' : ''"></i>
-                <span>Refresh Data</span>
-            </button>
-
-            <div class="st-pill-v2 bg-slate-900 text-white font-mono text-[11px] px-3.5 py-2 rounded-xl border border-slate-800 flex items-center gap-2">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>TA 2027 • AKTIF</span>
-            </div>
-        </div>
-    </div>
+    <x-ui.page-heading title="Verifikasi Dokumen" description="Periksa dokumen masuk, berikan catatan revisi, dan pantau keputusan verifikasi." eyebrow="Pengawasan dokumen"><x-slot:actions><x-ui.status-badge tone="blue" :label="'TA '.session('active_ta', date('Y'))" /><button type="button" @click="loading = true; window.location.reload()" class="st-btn st-btn-secondary"><i class="fa-solid fa-rotate" :class="{ 'animate-spin': loading }" aria-hidden="true"></i> Muat Ulang</button></x-slot:actions></x-ui.page-heading>
 
     <!-- ========================================== -->
     <!-- 2. EXECUTIVE KPI CARDS -->
     <!-- ========================================== -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-5">
-        
-        <!-- CARD 1: MENUNGGU VERIFIKASI -->
-        <a href="{{ route('admin.verifikasi.index', ['status' => 'menunggu_verifikasi']) }}" 
-           class="st-card-v2 p-4 sm:p-5 border-l-4 border-l-blue-600 flex items-center justify-between hover:shadow-md transition">
-            <div class="space-y-1 min-w-0">
-                <span class="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5 truncate">
-                    <span class="w-2 h-2 rounded-full bg-blue-600 inline-block animate-ping shrink-0"></span>
-                    <span>MENUNGGU VERIFIKASI</span>
-                </span>
-                <div class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{{ $kpi['menunggu'] ?? 0 }}</div>
-                <div class="text-[10px] sm:text-[11px] text-blue-600 font-bold block truncate">
-                    Antrean Masuk Perlu Review
-                </div>
-            </div>
-            <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg font-black border border-blue-100 shrink-0">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-            </div>
-        </a>
-
-        <!-- CARD 2: SEDANG DIREVIEW -->
-        <a href="{{ route('admin.verifikasi.index', ['status' => 'sedang_direview']) }}" 
-           class="st-card-v2 p-4 sm:p-5 border-l-4 border-l-purple-600 flex items-center justify-between hover:shadow-md transition">
-            <div class="space-y-1 min-w-0">
-                <span class="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5 truncate">
-                    <span class="w-2 h-2 rounded-full bg-purple-600 inline-block shrink-0"></span>
-                    <span>SEDANG DIREVIEW</span>
-                </span>
-                <div class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{{ $kpi['direview'] ?? 0 }}</div>
-                <div class="text-[10px] sm:text-[11px] text-purple-600 font-bold block truncate">
-                    Pemeriksaan Bab Berlangsung
-                </div>
-            </div>
-            <div class="w-10 h-10 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-lg font-black border border-purple-100 shrink-0">
-                <i class="fa-solid fa-magnifying-glass-chart"></i>
-            </div>
-        </a>
-
-        <!-- CARD 3: PERLU REVISI OPD -->
-        <a href="{{ route('admin.verifikasi.index', ['status' => 'perlu_revisi']) }}" 
-           class="st-card-v2 p-4 sm:p-5 border-l-4 border-l-amber-500 flex items-center justify-between hover:shadow-md transition">
-            <div class="space-y-1 min-w-0">
-                <span class="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5 truncate">
-                    <span class="w-2 h-2 rounded-full bg-amber-500 inline-block shrink-0"></span>
-                    <span>PERLU REVISI OPD</span>
-                </span>
-                <div class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{{ $kpi['revisi'] ?? 0 }}</div>
-                <div class="text-[10px] sm:text-[11px] text-amber-600 font-bold block truncate">
-                    Dikembalikan ke SKPD
-                </div>
-            </div>
-            <div class="w-10 h-10 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-black border border-amber-100 shrink-0">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-        </a>
-
-        <!-- CARD 4: DISETUJUI (FINAL) -->
-        <a href="{{ route('admin.verifikasi.index', ['status' => 'disetujui']) }}" 
-           class="st-card-v2 p-4 sm:p-5 border-l-4 border-l-emerald-600 flex items-center justify-between hover:shadow-md transition">
-            <div class="space-y-1 min-w-0">
-                <span class="text-[10px] sm:text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5 truncate">
-                    <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block shrink-0"></span>
-                    <span>DISETUJUI (FINAL)</span>
-                </span>
-                <div class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{{ $kpi['disetujui'] ?? 0 }}</div>
-                <div class="text-[10px] sm:text-[11px] text-emerald-600 font-bold block truncate">
-                    Dokumen Sah & Dikunci
-                </div>
-            </div>
-            <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg font-black border border-emerald-100 shrink-0">
-                <i class="fa-solid fa-circle-check"></i>
-            </div>
-        </a>
-
-    </div>
+    <div class="ed-stats">
+ <x-ui.statistic-card label="Menunggu Verifikasi" :value="$kpi['menunggu'] ?? 0" icon="fa-inbox" note="Antrean masuk perlu review" :href="route('admin.verifikasi.index', ['status' => 'menunggu_verifikasi'])" />
+ <x-ui.statistic-card label="Sedang Direview" :value="$kpi['direview'] ?? 0" icon="fa-magnifying-glass" tone="purple" note="Pemeriksaan sedang berlangsung" :href="route('admin.verifikasi.index', ['status' => 'sedang_direview'])" />
+ <x-ui.statistic-card label="Perlu Revisi" :value="$kpi['revisi'] ?? 0" icon="fa-rotate-left" tone="red" note="Dikembalikan ke OPD" :href="route('admin.verifikasi.index', ['status' => 'perlu_revisi'])" />
+ <x-ui.statistic-card label="Disetujui" :value="$kpi['disetujui'] ?? 0" icon="fa-circle-check" tone="green" note="Dokumen sah dan dikunci" :href="route('admin.verifikasi.index', ['status' => 'disetujui'])" />
+ </div>
 
     <!-- ========================================== -->
     <!-- 3. PRIORITY VERIFICATION PANEL (LANGKAH 3A ENHANCED) -->
     <!-- ========================================== -->
-    <div class="st-card-v2 p-5 sm:p-6 space-y-4 bg-slate-900 text-white rounded-3xl border border-slate-800 shadow-xl">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-3.5">
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-black text-sm">
-                    <i class="fa-solid fa-fire text-amber-400"></i>
-                </div>
-                <div>
-                    <h3 class="text-sm font-black tracking-tight text-white">Priority Verification Panel</h3>
-                    <p class="text-[11px] text-slate-400 font-medium">Top 5 Dokumen Prioritas Urgensi (Indikator: Lama Menunggu, Priority Score, Jumlah Revisi, & Assigned Verifikator)</p>
-                </div>
-            </div>
-            <span class="text-[10px] font-mono text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
-                AUTO-PRIORITY SCORING
-            </span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
-            @forelse($priorityDocs as $pDoc)
-                <div class="bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 rounded-2xl p-3.5 space-y-3 flex flex-col justify-between transition">
-                    <div class="space-y-2">
-                        <!-- SKOR & LAMA MENUNGGU -->
-                        <div class="flex items-center justify-between gap-1">
-                            <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full {{ $pDoc->priority_score >= 75 ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40' }}">
-                                Skor: {{ $pDoc->priority_score }}
-                            </span>
-                            <span class="text-[10px] text-amber-400 font-bold flex items-center gap-1" title="Lama Menunggu">
-                                <i class="fa-solid fa-hourglass-half text-[9px]"></i>
-                                {{ $pDoc->submitted_at ? $pDoc->submitted_at->diffForHumans(null, true) : $pDoc->created_at->diffForHumans(null, true) }}
-                            </span>
-                        </div>
-
-                        <!-- OPD & DOKUMEN -->
-                        <div>
-                            <div class="text-xs font-black text-white truncate" title="{{ $pDoc->opd->nama_opd ?? 'OPD' }}">
-                                {{ $pDoc->opd->nama_opd ?? 'SKPD' }}
-                            </div>
-                            <div class="text-[10px] text-slate-400 truncate">
-                                {{ $pDoc->jenis_dokumen }} (TA {{ $pDoc->tahun_anggaran }})
-                            </div>
-                        </div>
-
-                        <!-- REVISI & VERIFIKATOR (FITUR 3A) -->
-                        <div class="pt-1 border-t border-slate-700/60 flex items-center justify-between text-[10px] text-slate-400">
-                            <span class="font-bold flex items-center gap-1" title="Jumlah Revisi">
-                                <i class="fa-solid fa-rotate-left text-amber-400 text-[9px]"></i>
-                                Revisi: {{ $pDoc->revision_count ?? 0 }}x
-                            </span>
-                            <span class="truncate max-w-[100px] text-slate-300 font-bold" title="Verifikator Ditugaskan">
-                                {{ $pDoc->assignedVerificator->name ?? 'Belum ada' }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <a href="{{ route('admin.verifikasi.review', $pDoc->id) }}" 
-                       class="st-btn st-btn-amber st-btn-sm w-full text-[11px] py-1.5 rounded-xl font-bold justify-center shadow-md">
-                        <i class="fa-solid fa-clipboard-check text-[10px]"></i>
-                        <span>Review Sekarang</span>
-                    </a>
-                </div>
-            @empty
-                <div class="col-span-5 text-center py-6 text-slate-400 text-xs font-medium">
-                    <i class="fa-solid fa-circle-check text-emerald-400 text-lg mb-1 block"></i>
-                    <span>Tidak ada antrean dokumen prioritas tinggi saat ini. Seluruh pengajuan dalam kondisi bersih.</span>
-                </div>
-            @endforelse
-        </div>
-    </div>
+    <x-ui.priority-documents :documents="$priorityDocs" />
 
     <!-- ========================================== -->
     <!-- 4. WORKSPACE CORE WORKTABLE (8 vs 4 COLS) -->
@@ -217,7 +44,7 @@
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3.5">
                 <div>
                     <h3 class="text-sm font-black text-slate-900 tracking-tight">Tabel Pekerjaan Verifikasi Dokumen</h3>
-                    <p class="text-[11px] text-slate-500 font-medium">Lakukan pengawasan, tinjau PR-style per bab, dan tentukan keputusan status</p>
+                    <p class="text-[11px] text-slate-500 font-medium">Tinjau setiap bagian dokumen dan tentukan hasil pemeriksaan.</p>
                 </div>
                 <span class="text-[11px] font-black text-slate-700 bg-slate-100 px-3 py-1 rounded-xl shrink-0 border border-slate-200">
                     Total: {{ $documents->total() }} Dokumen
@@ -225,7 +52,7 @@
             </div>
 
             <!-- FILTER COMMAND BAR (LANGKAH 3C & SORTING 3B) -->
-            <form action="{{ route('admin.verifikasi.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-12 gap-2">
+            <x-ui.search-filter action="{{ route('admin.verifikasi.index') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-12 gap-2">
                 <div class="sm:col-span-3 relative">
                     <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama OPD..." class="st-input pl-8 text-xs h-9.5 rounded-xl">
                     <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs absolute left-3 top-3"></i>
@@ -242,7 +69,7 @@
                     <select name="tahun_anggaran" class="st-select text-xs h-9.5 rounded-xl font-bold">
                         <option value="all">Semua TA</option>
                         @foreach(range(2025, 2035) as $yF)
-                            <option value="{{ $yF }}" {{ ($tahunFilter ?? session('active_ta', 2027)) == $yF ? 'selected' : '' }}>TA {{ $yF }}</option>
+                            <option value="{{ $yF }}" {{ ($tahunFilter ?? session('active_ta', (int) date('Y'))) == $yF ? 'selected' : '' }}>TA {{ $yF }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -273,7 +100,7 @@
                         </a>
                     @endif
                 </div>
-            </form>
+            </x-ui.search-filter>
 
             <!-- WORKTABLE DATA FEED (WITH STICKY HEADER & LOADING SKELETON) -->
             <div class="st-table-wrapper rounded-2xl border border-slate-200 max-h-[600px] overflow-y-auto relative">
@@ -284,7 +111,7 @@
                     <span class="text-xs font-bold text-slate-700">Memuat data workspace...</span>
                 </div>
 
-                <table class="w-full text-xs text-left text-slate-700 border-collapse">
+                <x-ui.data-table class="w-full text-xs text-left text-slate-700 border-collapse">
                     <thead class="bg-slate-50 text-slate-900 uppercase text-[10px] font-black tracking-wider border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
                         <tr>
                             <th class="p-3.5">Perangkat Daerah</th>
@@ -301,7 +128,7 @@
                                 <!-- OPD METADATA -->
                                 <td class="p-3.5 font-bold text-slate-900">
                                     <div class="flex items-center space-x-3">
-                                        <div class="w-8 h-8 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+                                        <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
                                             <i class="fa-solid fa-building text-xs"></i>
                                         </div>
                                         <div class="min-w-0">
@@ -383,7 +210,7 @@
                             </tr>
                         @endforelse
                     </tbody>
-                </table>
+                </x-ui.data-table>
             </div>
 
             <!-- BETTER PAGINATION (LANGKAH 3B) -->

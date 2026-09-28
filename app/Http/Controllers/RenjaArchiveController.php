@@ -18,7 +18,7 @@ class RenjaArchiveController extends Controller
         $user = Auth::user();
         $opdId = $this->getEffectiveOpdIdForUser($user);
         $isAdminOrVerifikator = $user && ($user->isAdmin() || $user->isVerifikator() || $user->isStaff());
-        $activeTa = (int) session('active_ta', 2027);
+        $activeTa = (int) session('active_ta', (int) date('Y'));
 
         // Parameter Filter & Search
         $selectedYear = $request->query('tahun_anggaran', $request->query('year', 'all'));
@@ -145,7 +145,7 @@ class RenjaArchiveController extends Controller
      */
     public function showDocument(Request $request, int $id)
     {
-        $activeTa = (int) session('active_ta', 2027);
+        $activeTa = (int) session('active_ta', (int) date('Y'));
         $selectedDocument = $this->resolveAndAuthorizeArchiveDocument($id, $activeTa);
         $activeBab = $request->query('bab', null);
         $activeSectionId = $request->query('section', null);
@@ -340,6 +340,7 @@ class RenjaArchiveController extends Controller
      */
     private function getEffectiveOpdIdForUser($user): int
     {
+        abort_if($user->isOperator() && !$user->opd_id, 403, 'Akun belum ditautkan ke OPD.');
         if ($user->opd_id) {
             return $user->opd_id;
         }

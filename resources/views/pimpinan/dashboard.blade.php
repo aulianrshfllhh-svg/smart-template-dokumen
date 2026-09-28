@@ -6,48 +6,16 @@
 <div class="max-w-7xl mx-auto space-y-6">
 
     <!-- EXECUTIVE HEADER BANNER -->
-    <div class="st-card-v2 p-6 bg-gradient-to-r from-amber-600 via-amber-700 to-slate-900 text-white rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg">
-        <div>
-            <div class="inline-flex items-center space-x-2 bg-amber-400/20 border border-amber-300/40 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider text-amber-200 mb-2">
-                <i class="fa-solid fa-crown"></i>
-                <span>Executive Dashboard Pimpinan Daerah</span>
-            </div>
-            <h2 class="text-xl sm:text-3xl font-black text-white tracking-tight">Ringkasan Eksekutif Perencanaan Pembangunan</h2>
-            <p class="text-xs text-amber-100/90 mt-1 max-w-2xl">Rekapitulasi progres penyusunan dokumen Rencana Kerja (Renja) dari 71 Perangkat Daerah se-Kabupaten Cirebon Tahun Anggaran 2027.</p>
-        </div>
-        
-        <div class="bg-amber-950/50 backdrop-blur-xs p-3.5 rounded-2xl border border-amber-400/30 text-center shrink-0">
-            <div class="text-[10px] font-black uppercase tracking-wider text-amber-300">Tahun Perencanaan</div>
-            <div class="text-2xl font-black text-white">TA 2027</div>
-        </div>
-    </div>
+    <x-ui.page-heading title="Ringkasan Eksekutif" description="Pantau penyelesaian dokumen perencanaan perangkat daerah Kabupaten Cirebon." eyebrow="Dashboard Pimpinan"><x-slot:actions><x-ui.status-badge tone="blue" :label="'TA '.session('active_ta', date('Y'))" /></x-slot:actions></x-ui.page-heading>
 
     <!-- EXECUTIVE KPI CARDS -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="st-card-v2 p-5 border-l-4 border-l-emerald-600">
-            <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider block">🟢 Dokumen Disetujui (Sah)</span>
-            <div class="text-3xl font-black text-slate-900 mt-1.5">{{ $stats['disetujui'] ?? 0 }}</div>
-            <div class="text-[11px] text-emerald-600 font-bold mt-1">Siap Pelaksanaan APBD</div>
-        </div>
-
-        <div class="st-card-v2 p-5 border-l-4 border-l-blue-600">
-            <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider block">🔵 Menunggu Verifikasi</span>
-            <div class="text-3xl font-black text-slate-900 mt-1.5">{{ $stats['menunggu'] ?? 0 }}</div>
-            <div class="text-[11px] text-blue-600 font-bold mt-1">Proses Evaluasi Teknis</div>
-        </div>
-
-        <div class="st-card-v2 p-5 border-l-4 border-l-amber-500">
-            <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider block">🟡 Perlu Perbaikan OPD</span>
-            <div class="text-3xl font-black text-slate-900 mt-1.5">{{ $stats['revisi'] ?? 0 }}</div>
-            <div class="text-[11px] text-amber-600 font-bold mt-1">Dikembalikan ke SKPD</div>
-        </div>
-
-        <div class="st-card-v2 p-5 border-l-4 border-l-indigo-600">
-            <span class="text-[10px] font-black text-slate-500 uppercase tracking-wider block">🏢 Partisipasi 71 OPD</span>
-            <div class="text-3xl font-black text-slate-900 mt-1.5">{{ $opdStats['sudah_menyusun'] ?? 0 }} <span class="text-sm font-semibold text-slate-400">/ {{ $opdStats['total_opd'] ?? 71 }}</span></div>
-            <div class="text-[11px] text-indigo-600 font-bold mt-1">{{ round((($opdStats['sudah_menyusun'] ?? 0) / max($opdStats['total_opd'] ?? 71, 1)) * 100) }}% OPD Telah Menyusun</div>
-        </div>
-    </div>
+    <div class="ed-stats">
+<x-ui.statistic-card label="Dokumen Disetujui" :value="$stats['disetujui'] ?? 0" tone="green" note="Selesai diverifikasi" />
+<x-ui.statistic-card label="Menunggu Verifikasi" :value="$stats['menunggu'] ?? 0" tone="purple" note="Proses evaluasi teknis" />
+<x-ui.statistic-card label="Perlu Revisi" :value="$stats['revisi'] ?? 0" tone="red" note="Membutuhkan perbaikan" />
+<x-ui.statistic-card label="Partisipasi OPD" :value="($opdStats['sudah_menyusun'] ?? 0).' / '.($opdStats['total_opd'] ?? 0)" note="Perangkat daerah berpartisipasi" />
+</div>
+@include('components.ui.dashboard-charts', ['chartStats' => $stats, 'participation' => $opdStats])
 
     <!-- PROGRES TOP OPD TABLE FOR PIMPINAN -->
     <div class="st-card-v2 p-6 space-y-4">
@@ -56,11 +24,10 @@
                 <h3 class="text-base font-black text-slate-900">Rekapitulasi Progres Perangkat Daerah (Top OPD)</h3>
                 <p class="text-xs text-slate-500">Monitoring penyelesaian dokumen Rencana Kerja per dinas/badan</p>
             </div>
-            <a href="{{ route('bapperida.monitoring') }}" class="text-xs font-bold text-blue-600 hover:underline">Lihat Laporan Lengkap 71 OPD →</a>
         </div>
 
         <div class="st-table-wrapper">
-            <table class="w-full text-xs text-left text-slate-700 border-collapse">
+            <x-ui.data-table class="w-full text-xs text-left text-slate-700 border-collapse">
                 <thead class="bg-slate-50 text-slate-900 uppercase text-[10px] font-black tracking-wider border-b border-slate-200">
                     <tr>
                         <th class="p-3.5">Perangkat Daerah</th>
@@ -105,7 +72,7 @@
                         </tr>
                     @endforelse
                 </tbody>
-            </table>
+            </x-ui.data-table>
         </div>
     </div>
 

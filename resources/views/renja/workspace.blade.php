@@ -34,6 +34,7 @@
         $isPerubahanSubmitted = $renjaPerubahan && in_array(strtolower($renjaPerubahan->status), ['menunggu_pemeriksaan', 'menunggu_verifikasi', 'submitted', 'dikirim_ulang', 'sedang_diperiksa', 'sedang_direview', 'under_review']);
     @endphp
 
+    <x-ui.page-heading title="Ruang Kerja RENJA" description="Susun RENJA Murni dan Perubahan, gunakan template resmi, atau lanjutkan dokumen yang sedang dikerjakan." eyebrow="Smart Template / Penyusunan"><x-slot:actions><x-ui.status-badge tone="blue" :label="'TA '.$currentTa.'–'.($currentTa + 1)" /></x-slot:actions></x-ui.page-heading>
     <!-- PROGRESS RENJA SUMMARY BAR -->
     <div class="bg-white border border-slate-200/80 rounded-2xl p-3.5 sm:p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div class="flex items-center space-x-2 text-xs font-bold text-slate-800 shrink-0">
@@ -201,20 +202,48 @@
             <!-- ACTION BUTTONS -->
             <div class="pt-3 border-t border-slate-100">
                 @if($renjaMurni)
-                    <div class="grid grid-cols-2 gap-2 w-full">
-                        <a href="{{ route('renja.print', $renjaMurni->id) }}" target="_blank"
-                           class="w-full st-btn bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 min-w-0 shadow-2xs">
-                            <i class="fa-solid fa-eye text-xs shrink-0"></i>
-                            <span class="truncate">Lihat Dokumen</span>
-                        </a>
-                        <button type="button" 
-                                @click="detailModalOpen = true; detailDocType = 'murni';"
-                                class="w-full st-btn bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-2 px-3 rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 min-w-0 shadow-2xs cursor-pointer"
-                                title="Lihat Detail Dokumen">
-                            <i class="fa-solid fa-sliders text-xs shrink-0"></i>
-                            <span class="truncate">Detail</span>
-                        </button>
-                    </div>
+                    @php
+                        $isMurniDraftOrEditable = !in_array(strtolower($renjaMurni->status), ['submitted', 'menunggu_pemeriksaan', 'menunggu_verifikasi', 'disetujui', 'approved', 'dikunci', 'final']);
+                    @endphp
+                    @if($isMurniDraftOrEditable)
+                        <div class="space-y-2 w-full">
+                            <a href="{{ route('renja.editor', $renjaMurni->id) }}"
+                               class="w-full st-btn bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition group"
+                               title="Edit Konten Bab & Sub-Bab Dokumen">
+                                <i class="fa-solid fa-pen-to-square text-xs group-hover:scale-110 transition"></i>
+                                <span>Edit Dokumen (Draft)</span>
+                            </a>
+                            <div class="grid grid-cols-2 gap-2 w-full">
+                                <a href="{{ route('renja.print', $renjaMurni->id) }}" target="_blank"
+                                   class="w-full st-btn bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-1.5 px-3 rounded-xl flex items-center justify-center gap-1.5 min-w-0 shadow-2xs">
+                                    <i class="fa-solid fa-eye text-xs shrink-0"></i>
+                                    <span class="truncate">Lihat Dokumen</span>
+                                </a>
+                                <button type="button" 
+                                        @click="detailModalOpen = true; detailDocType = 'murni';"
+                                        class="w-full st-btn bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-1.5 px-3 rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 min-w-0 shadow-2xs cursor-pointer"
+                                        title="Lihat Detail Dokumen">
+                                    <i class="fa-solid fa-sliders text-xs shrink-0"></i>
+                                    <span class="truncate">Detail</span>
+                                </button>
+                            </div>
+                        </div>
+                    @else
+                        <div class="grid grid-cols-2 gap-2 w-full">
+                            <a href="{{ route('renja.print', $renjaMurni->id) }}" target="_blank"
+                               class="w-full st-btn bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 min-w-0 shadow-2xs">
+                                <i class="fa-solid fa-eye text-xs shrink-0"></i>
+                                <span class="truncate">Lihat Dokumen</span>
+                            </a>
+                            <button type="button" 
+                                    @click="detailModalOpen = true; detailDocType = 'murni';"
+                                    class="w-full st-btn bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-2 px-3 rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 min-w-0 shadow-2xs cursor-pointer"
+                                    title="Lihat Detail Dokumen">
+                                <i class="fa-solid fa-sliders text-xs shrink-0"></i>
+                                <span class="truncate">Detail</span>
+                            </button>
+                        </div>
+                    @endif
                 @else
                     <button type="button" onclick="openModalBuatDokumen('RENJA_MURNI')" class="w-full st-btn st-btn-amber font-black text-xs py-2 rounded-xl text-center shadow-2xs cursor-pointer">
                         <i class="fa-solid fa-plus-circle text-xs"></i>
@@ -272,20 +301,48 @@
             <!-- ACTION BUTTONS -->
             <div class="pt-3 border-t border-slate-100">
                 @if($renjaPerubahan)
-                    <div class="grid grid-cols-2 gap-2 w-full">
-                        <a href="{{ route('renja.print', $renjaPerubahan->id) }}" target="_blank"
-                           class="w-full st-btn bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 min-w-0 shadow-2xs">
-                            <i class="fa-solid fa-eye text-xs shrink-0"></i>
-                            <span class="truncate">Lihat Dokumen</span>
-                        </a>
-                        <button type="button" 
-                                @click="detailModalOpen = true; detailDocType = 'perubahan';"
-                                class="w-full st-btn bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-2 px-3 rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 min-w-0 shadow-2xs cursor-pointer"
-                                title="Lihat Detail Dokumen">
-                            <i class="fa-solid fa-sliders text-xs shrink-0"></i>
-                            <span class="truncate">Detail</span>
-                        </button>
-                    </div>
+                    @php
+                        $isPerubahanDraftOrEditable = !in_array(strtolower($renjaPerubahan->status), ['submitted', 'menunggu_pemeriksaan', 'menunggu_verifikasi', 'disetujui', 'approved', 'dikunci', 'final']);
+                    @endphp
+                    @if($isPerubahanDraftOrEditable)
+                        <div class="space-y-2 w-full">
+                            <a href="{{ route('renja.editor', $renjaPerubahan->id) }}"
+                               class="w-full st-btn bg-purple-600 hover:bg-purple-700 text-white font-black text-xs py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition group"
+                               title="Edit Konten Bab & Sub-Bab Dokumen">
+                                <i class="fa-solid fa-pen-to-square text-xs group-hover:scale-110 transition"></i>
+                                <span>Edit Dokumen (Draft)</span>
+                            </a>
+                            <div class="grid grid-cols-2 gap-2 w-full">
+                                <a href="{{ route('renja.print', $renjaPerubahan->id) }}" target="_blank"
+                                   class="w-full st-btn bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-1.5 px-3 rounded-xl flex items-center justify-center gap-1.5 min-w-0 shadow-2xs">
+                                    <i class="fa-solid fa-eye text-xs shrink-0"></i>
+                                    <span class="truncate">Lihat Dokumen</span>
+                                </a>
+                                <button type="button" 
+                                        @click="detailModalOpen = true; detailDocType = 'perubahan';"
+                                        class="w-full st-btn bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-1.5 px-3 rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 min-w-0 shadow-2xs cursor-pointer"
+                                        title="Lihat Detail Dokumen">
+                                    <i class="fa-solid fa-sliders text-xs shrink-0"></i>
+                                    <span class="truncate">Detail</span>
+                                </button>
+                            </div>
+                        </div>
+                    @else
+                        <div class="grid grid-cols-2 gap-2 w-full">
+                            <a href="{{ route('renja.print', $renjaPerubahan->id) }}" target="_blank"
+                               class="w-full st-btn bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 min-w-0 shadow-2xs">
+                                <i class="fa-solid fa-eye text-xs shrink-0"></i>
+                                <span class="truncate">Lihat Dokumen</span>
+                            </a>
+                            <button type="button" 
+                                    @click="detailModalOpen = true; detailDocType = 'perubahan';"
+                                    class="w-full st-btn bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-2 px-3 rounded-xl border border-slate-200 flex items-center justify-center gap-1.5 min-w-0 shadow-2xs cursor-pointer"
+                                    title="Lihat Detail Dokumen">
+                                <i class="fa-solid fa-sliders text-xs shrink-0"></i>
+                                <span class="truncate">Detail</span>
+                            </button>
+                        </div>
+                    @endif
                 @elseif($canCreatePerubahan)
                     <button type="button"
                         onclick="openModalBuatDokumen('RENJA_PERUBAHAN')"
@@ -420,9 +477,15 @@
                         <!-- Modal Quick Actions -->
                         <div class="flex items-center justify-end space-x-2 pt-2">
                             @if(!$isMurniFix && !$isMurniSubmitted)
+                                <a href="{{ route('renja.editor', $renjaMurni->id) }}"
+                                   class="st-btn bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs py-2 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer"
+                                   title="Edit Dokumen">
+                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                    <span>Edit Dokumen</span>
+                                </a>
                                 <button type="button"
                                         @click="detailModalOpen = false; uploadModalOpen = true; uploadDocType = 'murni'; uploadTargetUrl = '{{ route('operator.renja-murni.store-upload') }}'"
-                                        class="st-btn bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer">
+                                        class="st-btn bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs py-2 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer">
                                     <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
                                     <span>Ganti File</span>
                                 </button>
@@ -476,9 +539,15 @@
                         <!-- Modal Quick Actions -->
                         <div class="flex items-center justify-end space-x-2 pt-2">
                             @if(!$isPerubahanFix && !$isPerubahanSubmitted)
+                                <a href="{{ route('renja.editor', $renjaPerubahan->id) }}"
+                                   class="st-btn bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-2 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer"
+                                   title="Edit Dokumen">
+                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                    <span>Edit Dokumen</span>
+                                </a>
                                 <button type="button"
                                         @click="detailModalOpen = false; uploadModalOpen = true; uploadDocType = 'perubahan'; uploadTargetUrl = '{{ route('operator.renja-murni.store-upload') }}'"
-                                        class="st-btn bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer">
+                                        class="st-btn bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs py-2 px-3 rounded-xl flex items-center gap-1.5 cursor-pointer">
                                     <i class="fa-solid fa-cloud-arrow-up text-xs"></i>
                                     <span>Ganti File</span>
                                 </button>

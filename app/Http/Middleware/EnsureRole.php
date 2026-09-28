@@ -22,7 +22,10 @@ class EnsureRole
             return redirect()->route('login');
         }
 
-        $userRole = strtolower($user->role);
+        $userRole = match (strtolower($user->role)) {
+            'opd' => 'operator', 'staff_bapperida' => 'staff', 'eksekutif' => 'pimpinan',
+            default => strtolower($user->role),
+        };
 
         // Admin (Superadmin) memiliki akses penuh ke seluruh fitur & dashboard
         if ($userRole === 'admin') {

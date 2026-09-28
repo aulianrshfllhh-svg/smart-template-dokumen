@@ -21,11 +21,12 @@
     @endif
 
     @php
-        $isDraft = in_array($document->status, ['draft', 'belum_dikerjakan']);
-        $isRevisi = in_array($document->status, ['perlu_revisi', 'revisi', 'revision']);
-        $isSubmitted = in_array($document->status, ['submitted', 'menunggu_pemeriksaan', 'menunggu_verifikasi', 'dikirim_ulang']);
-        $isUnderReview = in_array($document->status, ['sedang_diperiksa', 'sedang_direview', 'under_review']);
-        $isFinal = in_array($document->status, ['disetujui', 'approved', 'dikunci', 'final']);
+        $stLower = strtolower(trim($document->status ?? ''));
+        $isDraft = in_array($stLower, ['draft', 'belum_dikerjakan']);
+        $isRevisi = in_array($stLower, ['perlu_revisi', 'revisi', 'revision']);
+        $isSubmitted = in_array($stLower, ['submitted', 'menunggu_pemeriksaan', 'menunggu_verifikasi', 'dikirim_ulang']);
+        $isUnderReview = in_array($stLower, ['sedang_diperiksa', 'sedang_direview', 'under_review']);
+        $isFinal = in_array($stLower, ['disetujui', 'approved', 'dikunci', 'final']);
         $versionNum = ($document->revision_count ?? 0) + 1;
         $auditTrail = $document->metadata['audit_trail'] ?? [];
     @endphp
@@ -462,7 +463,7 @@
                             </h4>
 
                             <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs text-slate-800 leading-relaxed font-serif">
-                                {!! $sec->content ?: '<p class="italic text-slate-400 font-sans">Belum diisi narasi.</p>' !!}
+                                {!! app(\App\Services\DocumentHtmlService::class)->forDocumentDisplay($document, $sec->content ?: '<p class="italic text-slate-400 font-sans">Belum diisi narasi.</p>') !!}
                             </div>
                         </div>
                     @endforeach

@@ -43,7 +43,7 @@ class RenjaIndukSourceOfTruthTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_reads_effective_sections_live_from_renja_murni_induk()
     {
         // 1. Buat Dokumen Induk RENJA Murni
@@ -71,7 +71,7 @@ class RenjaIndukSourceOfTruthTest extends TestCase
         $this->assertStringContainsString('Konten Narasi Latar Belakang yang Telah Direvisi di Induk', $effectiveSec11Updated->content);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_reads_effective_sections_live_from_renja_perubahan_induk()
     {
         // 1. Setup Induk Murni approved & Perubahan
@@ -92,7 +92,7 @@ class RenjaIndukSourceOfTruthTest extends TestCase
         $this->assertStringContainsString('Konten Khusus Dokumen Perubahan TA 2026', $effectiveSec11->content);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_excludes_front_matter_sections_from_lampiran_effective_sections()
     {
         $murni = $this->opdDocumentService->createRenjaMurni($this->opd->id, 2027);
@@ -117,7 +117,7 @@ class RenjaIndukSourceOfTruthTest extends TestCase
         $this->assertFalse($hasPreface, 'Dokumen Lampiran tidak boleh mengandung seksi Kata Pengantar.');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_blocks_direct_editing_of_lampiran_and_redirects_to_preview()
     {
         $murni = $this->opdDocumentService->createRenjaMurni($this->opd->id, 2027);
@@ -130,7 +130,7 @@ class RenjaIndukSourceOfTruthTest extends TestCase
         $response->assertSessionHas('info');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_synchronizes_effective_status_from_induk_to_lampiran()
     {
         $murni = $this->opdDocumentService->createRenjaMurni($this->opd->id, 2027);
@@ -145,7 +145,7 @@ class RenjaIndukSourceOfTruthTest extends TestCase
         $this->assertEquals('approved', $lampiran->getEffectiveStatus());
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function it_exports_lampiran_to_word_using_effective_sections_and_proper_headers()
     {
         $murni = $this->opdDocumentService->createRenjaMurni($this->opd->id, 2027);

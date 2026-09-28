@@ -382,7 +382,7 @@ class TemplatePersonalizerStep2Test extends TestCase
             'status' => 'draft',
         ]);
 
-        $controller = new \App\Http\Controllers\RenjaDocumentController(app(\App\Services\OpdDocumentService::class));
+        $controller = app(\App\Http\Controllers\RenjaDocumentController::class);
         $filenameDocx = $controller->buildExportFilename($doc, 'docx');
 
         $this->assertEquals('RENJA_Murni_2027.docx', $filenameDocx);

@@ -23,6 +23,7 @@ class RenjaLampiranController extends Controller
 
     protected function getEffectiveOpdIdForUser($user): int
     {
+        abort_if($user->isOperator() && !$user->opd_id, 403, 'Akun belum ditautkan ke OPD.');
         if (($user->isAdmin() || $user->isVerifikator() || $user->isStaff()) && session()->has('effective_opd_id')) {
             return (int) session('effective_opd_id');
         }

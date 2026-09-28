@@ -7,12 +7,10 @@
     <!-- Scripts & Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <!-- FontAwesome CDN -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="{{ asset('vendor/fontawesome/css/all.min.css') }}" rel="stylesheet">
     <!-- Alpine.js CDN -->
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         
         body { 
             font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
@@ -26,8 +24,8 @@
         .ui-card {
             background-color: #FFFFFF;
             border: 1px solid #E5E7EB;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            box-shadow: var(--ed-shadow);
         }
 
         /* ===== COMPACT ADAPTIVE TOOLBAR (HEIGHT ~75px) ===== */
@@ -127,7 +125,7 @@
             padding: 2cm !important;
             box-sizing: border-box !important;
             background: #FFFFFF !important;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
             border: 1px solid #E5E7EB !important;
             position: relative !important;
             display: flex !important;
@@ -140,8 +138,16 @@
             color: #000000;
         }
 
+        .subbab-title-line {
+            font-family: 'Bookman Old Style', 'Bookman', Georgia, serif !important;
+            font-size: 12pt !important;
+            line-height: 1.5 !important;
+            margin-top: 14pt;
+            margin-bottom: 6pt;
+        }
+
         .subbab-content {
-            min-height: 120px !important;
+            min-height: 70px !important;
             height: auto !important;
             outline: none !important;
             border: none !important;
@@ -157,26 +163,50 @@
             tab-size: 4 !important;
             -moz-tab-size: 4 !important;
             white-space: pre-wrap !important;
+            padding: 2px 0 10px !important;
         }
 
         .subbab-content p {
-            margin-bottom: 4pt;
+            text-indent: 1cm !important;
+            margin-bottom: 6pt !important;
+            line-height: 1.5 !important;
         }
 
-        .subbab-header-bar {
+        .subbab-content table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            margin-top: 8pt !important;
+            margin-bottom: 12pt !important;
+            font-size: 10pt !important;
+        }
+
+        .subbab-content table th,
+        .subbab-content table td {
+            border: 0.5pt solid #000000 !important;
+            padding: 4pt 6pt !important;
+            vertical-align: top !important;
+            font-size: 10pt !important;
+            line-height: 1.3 !important;
+        }
+
+        .subbab-content table th {
+            background-color: #F9FAFB !important;
+            text-align: center !important;
+            font-weight: bold !important;
+        }
+
+        .cover-paper-box {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             justify-content: space-between;
-            background: #F9FAFB;
-            border-bottom: 1px solid #E5E7EB;
-            padding: 6px 12px;
-            border-radius: 6px;
-            margin-top: 20px;
-            margin-bottom: 10px;
+            align-items: center;
+            min-height: 29cm;
+            text-align: center;
+            font-family: 'Bookman Old Style', 'Bookman', Georgia, serif;
         }
     </style>
 </head>
-<body class="bg-[#F3F4F6] text-gray-800 min-h-screen flex flex-col justify-between pb-24" x-data="{ activeTab: 'narasi', showOutline: true, showValidation: false, showSmartPanel: false }">
+<body class="ed-app ed-editor bg-[#F3F4F6] text-gray-800 min-h-screen flex flex-col justify-between pb-24" x-data="{ activeTab: 'narasi', showOutline: true, showValidation: false, showSmartPanel: false }">
 
     <div>
         <!-- READ ONLY BANNER NOTICE (Sprint 6.0 Fitur 6) -->
@@ -189,7 +219,6 @@
                 <span class="text-[10px] bg-slate-900 text-white px-2.5 py-0.5 rounded-full font-bold uppercase">Read Only Mode</span>
             </div>
         @endif
-
         <!-- ============================================================ -->
         <!-- SECTION 1: HEADER EDITOR FOUNDATION (FITUR 1)                -->
         <!-- ============================================================ -->
@@ -419,118 +448,99 @@
                 <!-- OUTLINE NAVIGASI TABS -->
                 <div class="flex items-center space-x-2 flex-wrap gap-y-1">
                     
-                    <!-- TOMBOL TAMBAH HALAMAN AWAL (FRONT MATTER DROPDOWN) -->
-                    @if(!$isReadOnly)
-                        <div x-data="{ open: false }" class="relative">
-                            <button x-on:click="open = !open" type="button"
-                                    class="px-3.5 py-1.5 rounded-xl text-xs font-black bg-indigo-600 hover:bg-indigo-700 text-white transition flex items-center space-x-1.5 shadow-sm border border-indigo-500 cursor-pointer"
-                                    title="Tambah Halaman Awal (Cover, Kata Pengantar, Daftar Isi, Gambar, Tabel, Lampiran)">
-                                <i class="fa-solid fa-plus text-xs"></i>
-                                <span>Halaman Awal</span>
-                                <i class="fa-solid fa-chevron-down text-[10px] ml-0.5"></i>
-                            </button>
-                            <div x-show="open" x-on:click.away="open = false" x-transition
-                                 class="absolute left-0 mt-1.5 w-60 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 py-1.5 text-xs font-bold text-slate-800">
-                                
-                                <form action="{{ route('renja.editor.addFrontMatter', $document->id) }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="type" value="cover">
-                                    <button type="submit" class="w-full text-left px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700 flex items-center justify-between transition cursor-pointer">
-                                        <span class="flex items-center gap-2">
-                                            <i class="fa-solid fa-book-open text-purple-600"></i>
-                                            <span>+ Cover (opsional)</span>
-                                        </span>
-                                        @if($frontSections->where('section_type', 'cover')->count() > 0)
-                                            <span class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-black">ADA</span>
-                                        @endif
-                                    </button>
-                                </form>
-
-                                <form action="{{ route('renja.editor.addFrontMatter', $document->id) }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="type" value="preface">
-                                    <button type="submit" class="w-full text-left px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700 flex items-center justify-between transition cursor-pointer">
-                                        <span class="flex items-center gap-2">
-                                            <i class="fa-solid fa-feather text-amber-600"></i>
-                                            <span>+ Kata Pengantar</span>
-                                        </span>
-                                        @if($frontSections->where('section_type', 'preface')->count() > 0)
-                                            <span class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-black">ADA</span>
-                                        @endif
-                                    </button>
-                                </form>
-
-                                <div class="border-t border-slate-100 my-1"></div>
-
-                                <form action="{{ route('renja.editor.addFrontMatter', $document->id) }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="type" value="table_of_contents">
-                                    <button type="submit" class="w-full text-left px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700 flex items-center justify-between transition cursor-pointer">
-                                        <span class="flex items-center gap-2">
-                                            <i class="fa-solid fa-list-ol text-blue-600"></i>
-                                            <span>+ Daftar Isi</span>
-                                        </span>
-                                        @if($frontSections->where('section_type', 'table_of_contents')->count() > 0)
-                                            <span class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-black">ADA</span>
-                                        @endif
-                                    </button>
-                                </form>
-
-                                <form action="{{ route('renja.editor.addFrontMatter', $document->id) }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="type" value="list_of_figures">
-                                    <button type="submit" class="w-full text-left px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700 flex items-center justify-between transition cursor-pointer">
-                                        <span class="flex items-center gap-2">
-                                            <i class="fa-regular fa-image text-emerald-600"></i>
-                                            <span>+ Daftar Gambar</span>
-                                        </span>
-                                        @if($frontSections->where('section_type', 'list_of_figures')->count() > 0)
-                                            <span class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-black">ADA</span>
-                                        @endif
-                                    </button>
-                                </form>
-
-                                <form action="{{ route('renja.editor.addFrontMatter', $document->id) }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="type" value="list_of_tables">
-                                    <button type="submit" class="w-full text-left px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700 flex items-center justify-between transition cursor-pointer">
-                                        <span class="flex items-center gap-2">
-                                            <i class="fa-solid fa-table text-indigo-600"></i>
-                                            <span>+ Daftar Tabel</span>
-                                        </span>
-                                        @if($frontSections->where('section_type', 'list_of_tables')->count() > 0)
-                                            <span class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-black">ADA</span>
-                                        @endif
-                                    </button>
-                                </form>
-
-                                <form action="{{ route('renja.editor.addFrontMatter', $document->id) }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="type" value="list_of_appendices">
-                                    <button type="submit" class="w-full text-left px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700 flex items-center justify-between transition cursor-pointer">
-                                        <span class="flex items-center gap-2">
-                                            <i class="fa-solid fa-paperclip text-purple-600"></i>
-                                            <span>+ Daftar Lampiran</span>
-                                        </span>
-                                        @if($frontSections->where('section_type', 'list_of_appendices')->count() > 0)
-                                            <span class="text-[9px] bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded font-black">ADA</span>
-                                        @endif
-                                    </button>
-                                </form>
-
-                            </div>
-                        </div>
+                    <!-- TAB COVER RESMI (Jika Template Memiliki Fitur Cover) -->
+                    @if($formatConfig['has_cover'] ?? true)
+                        <a href="{{ route('renja.editor', [$document->id, 'bab' => 'COVER']) }}"
+                           class="px-3.5 py-1.5 rounded-xl text-xs font-bold border transition flex items-center space-x-1.5 shadow-2xs {{ $isCoverView ? 'bg-purple-800 text-white border-purple-800 font-extrabold shadow-md' : 'border-purple-300 bg-purple-50 text-purple-900 hover:bg-purple-100' }}"
+                           title="Cover / Sampul Dokumen Resmi">
+                            <i class="fa-solid fa-book-open text-xs"></i>
+                            <span>COVER</span>
+                        </a>
                     @endif
 
-                    <!-- BAGIAN AWAL (Jika Ada Halaman Awal Yang Dibuat) -->
-                    @if($frontSections->count() > 0)
-                        <div class="relative">
-                            <a href="{{ route('renja.editor', [$document->id, 'bab' => 'FRONT']) }}" 
-                               class="px-3.5 py-1.5 rounded-xl text-xs font-bold border transition flex items-center space-x-1.5 shadow-2xs {{ $isFrontView ? 'bg-indigo-700 text-white border-indigo-700 font-extrabold shadow-md' : 'border-indigo-300 bg-indigo-50 text-indigo-900 hover:bg-indigo-100' }}">
+                    <!-- TAB BAGIAN AWAL (Single Consolidated Dropdown) -->
+                    @php
+                        $nonCoverFronts = $frontSections->where('section_type', '!=', 'cover');
+                    @endphp
+                    @if($nonCoverFronts->count() > 0)
+                        <div x-data="{ openFront: false }" class="relative">
+                            <button x-on:click="openFront = !openFront" type="button"
+                               class="px-3.5 py-1.5 rounded-xl text-xs font-bold border transition flex items-center space-x-1.5 shadow-2xs cursor-pointer {{ ($isFrontView && !$isCoverView) ? 'bg-indigo-700 text-white border-indigo-700 font-extrabold shadow-md' : 'border-indigo-300 bg-indigo-50 text-indigo-900 hover:bg-indigo-100' }}"
+                               title="Bagian Awal (Lembar Pengesahan, Kata Pengantar, Daftar Isi)">
                                 <i class="fa-solid fa-book-bookmark text-xs"></i>
                                 <span>BAGIAN AWAL</span>
-                                <span class="px-1.5 py-0.2 {{ $isFrontView ? 'bg-indigo-900 text-indigo-100' : 'bg-indigo-200 text-indigo-900' }} text-[9px] font-black rounded">{{ $frontSections->count() }}</span>
-                            </a>
+                                <span class="px-1.5 py-0.2 {{ ($isFrontView && !$isCoverView) ? 'bg-indigo-900 text-indigo-100' : 'bg-indigo-200 text-indigo-900' }} text-[9px] font-black rounded">{{ $nonCoverFronts->count() }}</span>
+                                <i class="fa-solid fa-chevron-down text-[9px] ml-0.5 opacity-80"></i>
+                            </button>
+                            <div x-show="openFront" x-on:click.away="openFront = false" x-transition
+                                 class="absolute left-0 mt-1.5 w-64 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 py-1.5 text-xs font-bold text-slate-800">
+                                
+                                <div class="px-3 py-1 text-[10px] uppercase font-black tracking-wider text-slate-400">
+                                    Halaman Bagian Awal
+                                </div>
+
+                                @foreach($nonCoverFronts as $ncf)
+                                    <a href="{{ route('renja.editor', [$document->id, 'bab' => $ncf->sub_bab_code, 'section' => $ncf->id]) }}"
+                                       class="w-full text-left px-4 py-2 hover:bg-indigo-50 hover:text-indigo-700 flex items-center justify-between transition cursor-pointer {{ ($activeFrontSection?->id === $ncf->id) ? 'bg-indigo-50 text-indigo-800 font-black' : '' }}">
+                                        <span>{{ $ncf->sub_bab_title }}</span>
+                                        @if($ncf->is_completed)
+                                            <i class="fa-solid fa-circle-check text-emerald-600 text-[11px]"></i>
+                                        @endif
+                                    </a>
+                                @endforeach
+
+                                @if(!$isReadOnly)
+                                    <div class="border-t border-slate-100 my-1"></div>
+                                    <div class="px-3 py-1 text-[10px] uppercase font-black tracking-wider text-slate-400">
+                                        + Tambah Halaman Lainnya
+                                    </div>
+
+                                    @if($frontSections->where('section_type', 'table_of_contents')->count() === 0)
+                                        <form action="{{ route('renja.editor.addFrontMatter', $document->id) }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="type" value="table_of_contents">
+                                            <button type="submit" class="w-full text-left px-4 py-1.5 hover:bg-indigo-50 text-slate-700 text-xs flex items-center gap-2 transition cursor-pointer">
+                                                <i class="fa-solid fa-list-ol text-blue-600 text-[11px]"></i>
+                                                <span>+ Daftar Isi</span>
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    @if($frontSections->where('section_type', 'list_of_figures')->count() === 0)
+                                        <form action="{{ route('renja.editor.addFrontMatter', $document->id) }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="type" value="list_of_figures">
+                                            <button type="submit" class="w-full text-left px-4 py-1.5 hover:bg-indigo-50 text-slate-700 text-xs flex items-center gap-2 transition cursor-pointer">
+                                                <i class="fa-regular fa-image text-emerald-600 text-[11px]"></i>
+                                                <span>+ Daftar Gambar</span>
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    @if($frontSections->where('section_type', 'list_of_tables')->count() === 0)
+                                        <form action="{{ route('renja.editor.addFrontMatter', $document->id) }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="type" value="list_of_tables">
+                                            <button type="submit" class="w-full text-left px-4 py-1.5 hover:bg-indigo-50 text-slate-700 text-xs flex items-center gap-2 transition cursor-pointer">
+                                                <i class="fa-solid fa-table text-indigo-600 text-[11px]"></i>
+                                                <span>+ Daftar Tabel</span>
+                                            </button>
+                                        </form>
+                                    @endif
+
+                                    @if($frontSections->where('section_type', 'list_of_appendices')->count() === 0)
+                                        <form action="{{ route('renja.editor.addFrontMatter', $document->id) }}" method="POST">
+                                            @csrf
+                                            <input type="hidden" name="type" value="list_of_appendices">
+                                            <button type="submit" class="w-full text-left px-4 py-1.5 hover:bg-indigo-50 text-slate-700 text-xs flex items-center gap-2 transition cursor-pointer">
+                                                <i class="fa-solid fa-paperclip text-purple-600 text-[11px]"></i>
+                                                <span>+ Daftar Lampiran</span>
+                                            </button>
+                                        </form>
+                                    @endif
+                                @endif
+
+                            </div>
                         </div>
                     @endif
 
@@ -777,12 +787,19 @@
 
                             </div>
 
-                            <!-- EXPORT MS WORD BUTTON -->
-                            <div class="flex items-center">
-                                <a href="{{ route('renja.exportWord', $document->id) }}" 
-                                   class="px-4 py-2 bg-[#1D4ED8] hover:bg-blue-800 text-white font-bold text-xs rounded-lg shadow-md transition flex items-center space-x-2 border border-blue-900">
-                                    <i class="fa-solid fa-file-word text-blue-200 text-sm"></i>
-                                    <span>Unduh MS Word</span>
+                            <!-- EXPORT MS WORD & PDF BUTTONS -->
+                            <div class="flex items-center space-x-2">
+                                <a href="{{ route('renja.editor.exportWord', $document->id) }}"
+                                   class="px-3.5 py-1.5 bg-[#1D4ED8] hover:bg-blue-800 text-white font-bold text-xs rounded-lg shadow-sm transition flex items-center space-x-1.5 border border-blue-900"
+                                   title="Unduh Dokumen MS Word (.docx) Format Resmi F4">
+                                    <i class="fa-solid fa-file-word text-blue-200 text-xs"></i>
+                                    <span>Unduh Word</span>
+                                </a>
+                                <a href="{{ route('renja.editor.exportPdf', $document->id) }}"
+                                   class="px-3.5 py-1.5 bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs rounded-lg shadow-sm transition flex items-center space-x-1.5 border border-rose-900"
+                                   title="Unduh Dokumen PDF Format Resmi F4">
+                                    <i class="fa-solid fa-file-pdf text-rose-200 text-xs"></i>
+                                    <span>Unduh PDF</span>
                                 </a>
                             </div>
 
@@ -880,12 +897,19 @@
 
                             </div>
 
-                            <!-- EXPORT MS WORD BUTTON -->
-                            <div class="flex items-center">
-                                <a href="{{ route('renja.exportWord', $document->id) }}" 
-                                   class="px-4 py-2 bg-[#1D4ED8] hover:bg-blue-800 text-white font-bold text-xs rounded-lg shadow-md transition flex items-center space-x-2 border border-blue-900">
-                                    <i class="fa-solid fa-file-word text-blue-200 text-sm"></i>
-                                    <span>Unduh MS Word</span>
+                            <!-- EXPORT MS WORD & PDF BUTTONS -->
+                            <div class="flex items-center space-x-2">
+                                <a href="{{ route('renja.editor.exportWord', $document->id) }}"
+                                   class="px-3.5 py-1.5 bg-[#1D4ED8] hover:bg-blue-800 text-white font-bold text-xs rounded-lg shadow-sm transition flex items-center space-x-1.5 border border-blue-900"
+                                   title="Unduh Dokumen MS Word (.docx) Format Resmi F4">
+                                    <i class="fa-solid fa-file-word text-blue-200 text-xs"></i>
+                                    <span>Unduh Word</span>
+                                </a>
+                                <a href="{{ route('renja.editor.exportPdf', $document->id) }}"
+                                   class="px-3.5 py-1.5 bg-rose-700 hover:bg-rose-800 text-white font-bold text-xs rounded-lg shadow-sm transition flex items-center space-x-1.5 border border-rose-900"
+                                   title="Unduh Dokumen PDF Format Resmi F4">
+                                    <i class="fa-solid fa-file-pdf text-rose-200 text-xs"></i>
+                                    <span>Unduh PDF</span>
                                 </a>
                             </div>
 
@@ -963,6 +987,18 @@
                                         <button type="button" onclick="tableSetBorderPattern('thick')" class="px-2 py-1 hover:bg-slate-700 rounded text-[11px] font-bold text-slate-200" title="Garis Bingkai 2px">2px</button>
                                         <button type="button" onclick="tableSetBorderPattern('none')" class="px-2 py-1 hover:bg-slate-700 rounded text-[11px] font-bold text-red-300" title="Tanpa Garis Bingkai">Tanpa</button>
                                     </div>
+
+                                    <!-- JUDUL/NOMOR TABEL OTOMATIS & F4 FIT -->
+                                    <div class="flex items-center space-x-1 bg-slate-800 p-1 rounded-lg border border-slate-700">
+                                        <button type="button" onclick="openTableCaptionModal()" title="Beri Judul & Nomor Tabel Otomatis (Masuk Daftar Tabel)" class="px-2.5 py-1 bg-amber-600 hover:bg-amber-500 rounded text-white flex items-center gap-1 font-bold text-[11px] shadow-xs">
+                                            <i class="fa-solid fa-tag text-[10px]"></i>
+                                            <span>+ Judul/Nomor</span>
+                                        </button>
+                                        <button type="button" onclick="tableAutoFitF4()" title="Rapikan Lebar Tabel agar Pas Sesuai Halaman F4 (100% tidak terpotong)" class="px-2 py-1 bg-blue-700 hover:bg-blue-600 rounded text-white flex items-center gap-1 font-bold text-[11px]">
+                                            <i class="fa-solid fa-arrows-left-right text-[10px]"></i>
+                                            <span>F4 Fit</span>
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <button type="button" onclick="tableRemoveEntireTable()" class="px-2.5 py-1.5 bg-red-600 hover:bg-red-700 text-white font-extrabold rounded-lg transition text-xs flex items-center gap-1 shadow">
@@ -973,39 +1009,101 @@
 
                             <section class="paper-f4 continuous-paper" id="paper-canvas-main">
 
-                                <!-- KONTEN SEKSI BAGIAN AWAL (FRONT MATTER) -->
-                                @if($isFrontView && $frontSections->count() > 0)
-                                    <div class="front-matter-container space-y-10 pb-10">
-                                        <div class="text-center font-black text-sm uppercase tracking-wider text-slate-800 border-b pb-3 mb-6">
-                                            BAGIAN AWAL DOKUMEN
+                                <!-- KONTEN SEKSI COVER RESMI (JIKA COVER AKTIF) -->
+                                @if($isCoverView)
+                                    @php
+                                        $cv = $document->cover_data ?? [];
+                                        $judulCover = $cv['judul_dokumen'] ?? strtoupper($document->jenis_dokumen ?? 'RENCANA KERJA (RENJA)');
+                                        $tahunAnggaran = $cv['tahun_anggaran'] ?? $document->tahun_anggaran;
+                                        $namaOpd = $cv['nama_opd'] ?? ($document->opd->nama_opd ?? 'PERANGKAT DAERAH');
+                                        $namaPemda = $cv['nama_pemda'] ?? 'PEMERINTAH KABUPATEN CIREBON';
+                                        $lokasi = $cv['lokasi'] ?? 'SUMBER';
+                                        $tahunTerbit = $cv['tahun_terbit'] ?? date('Y');
+                                    @endphp
+                                    <div class="cover-paper-box relative select-none">
+                                        @if(!$isReadOnly)
+                                            <div class="absolute right-0 top-0 no-print">
+                                                <button type="button" onclick="document.getElementById('modal-edit-cover').classList.remove('hidden')"
+                                                        class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer">
+                                                    <i class="fa-solid fa-pen-to-square text-purple-600"></i>
+                                                    <span>Edit Data Cover</span>
+                                                </button>
+                                            </div>
+                                        @endif
+
+                                        <!-- JUDUL COVER -->
+                                        <div class="space-y-4 pt-10 max-w-lg mx-auto">
+                                            <h1 class="text-base sm:text-lg font-normal tracking-wide text-black uppercase leading-snug" style="font-weight: normal !important;">
+                                                {{ $judulCover }}
+                                            </h1>
+                                            <div class="text-sm sm:text-base font-normal text-black uppercase tracking-wider" style="font-weight: normal !important;">
+                                                TAHUN ANGGARAN {{ $tahunAnggaran }}
+                                            </div>
                                         </div>
-                                        @foreach($frontSections as $fs)
-                                            <div class="front-section-wrapper relative group mb-10 pb-8 border-b border-slate-200 last:border-0" id="section-wrapper-{{ $fs->id }}">
-                                                <div class="flex items-center justify-between border-b pb-2 mb-4">
-                                                    <span class="text-xs font-black text-indigo-700 uppercase tracking-widest">[ {{ $fs->sub_bab_title }} ]</span>
-                                                    @if(!$isReadOnly && !$fs->is_required && empty($fs->template_section_id))
-                                                        <form action="{{ route('renja.editor.deleteSection', [$document->id, $fs->id]) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus {{ $fs->sub_bab_title }} dari Bagian Awal?')" class="inline">
+
+                                        <!-- LOGO / LAMBANG DAERAH -->
+                                        <div class="my-12 flex flex-col items-center justify-center">
+                                            <div class="w-36 h-40 border-2 border-dashed border-slate-300 rounded-2xl flex flex-col items-center justify-center p-4 bg-slate-50/50 shadow-xs">
+                                                <i class="fa-solid fa-landmark-dome text-slate-400 text-5xl mb-2"></i>
+                                                <span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest text-center leading-tight">Lambang Daerah Kab. Cirebon</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- NAMA OPD & PEMKAB -->
+                                        <div class="space-y-2 pb-10 max-w-lg mx-auto">
+                                            <div class="text-sm sm:text-base font-normal text-black uppercase leading-tight tracking-wide" style="font-weight: normal !important;">
+                                                {{ $namaOpd }}
+                                            </div>
+                                            <div class="text-sm font-normal text-black uppercase tracking-wider" style="font-weight: normal !important;">
+                                                {{ $namaPemda }}
+                                            </div>
+                                            <div class="text-xs sm:text-sm font-normal text-black uppercase tracking-widest pt-3" style="font-weight: normal !important;">
+                                                {{ $lokasi }}
+                                            </div>
+                                            <div class="text-xs font-normal text-black tracking-widest" style="font-weight: normal !important;">
+                                                {{ $tahunTerbit }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <!-- KONTEN SEKSI BAGIAN AWAL (FRONT MATTER SATU HALAMAN RESMI) -->
+                                @if($isFrontView && !$isCoverView && $activeFrontSection)
+                                    <div class="front-matter-single-container min-h-[650px] flex flex-col justify-between">
+                                        <div>
+
+
+                                            <!-- JUDUL RESMI HALAMAN AWAL (HEADING TENGAH) -->
+                                            <div id="front-header-main" class="mb-8 text-center relative group">
+                                                <h2 class="text-sm font-normal text-black uppercase tracking-wider leading-snug" style="font-family: 'Bookman Old Style', 'Bookman', serif; font-weight: normal !important; font-size: 12pt;">
+                                                    {{ strtoupper($activeFrontSection->sub_bab_title) }}
+                                                </h2>
+                                                @if(!$isReadOnly && !$activeFrontSection->is_required && empty($activeFrontSection->template_section_id))
+                                                    <div class="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition no-print">
+                                                        <form action="{{ route('renja.editor.deleteSection', [$document->id, $activeFrontSection->id]) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus halaman {{ $activeFrontSection->sub_bab_title }}?')" class="inline">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="submit" class="text-xs text-rose-600 hover:text-rose-800 font-bold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                                                            <button type="submit" class="text-xs text-rose-600 hover:text-rose-800 font-bold flex items-center gap-1">
                                                                 <i class="fa-solid fa-trash-can"></i>
                                                                 <span>Hapus Halaman</span>
                                                             </button>
                                                         </form>
-                                                    @endif
-                                                </div>
-
-                                                <!-- ISI SEKSI FRONT MATTER -->
-                                                <div id="section-content-{{ $fs->id }}"
-                                                     class="subbab-content {{ $fs->section_type === 'table_of_contents' ? 'select-none bg-slate-50/50 p-4 rounded-xl border border-slate-200' : '' }}"
-                                                     contenteditable="{{ $fs->section_type === 'table_of_contents' ? 'false' : 'true' }}"
-                                                     spellcheck="false"
-                                                     data-section-id="{{ $fs->id }}"
-                                                     oninput="{{ $fs->section_type === 'table_of_contents' ? '' : "saveSectionAjax('{$fs->id}')" }}">
-                                                    {!! $fs->content !!}
-                                                </div>
+                                                    </div>
+                                                @endif
                                             </div>
-                                        @endforeach
+
+                                            <!-- ISI KONTEN HALAMAN AWAL MENYATU ALAMI -->
+                                            <div id="section-content-{{ $activeFrontSection->id }}"
+                                                 class="subbab-content {{ $activeFrontSection->section_type === 'table_of_contents' ? 'select-none bg-slate-50/50 p-4 rounded-xl border border-slate-200' : '' }}"
+                                                 contenteditable="{{ ($isReadOnly || $activeFrontSection->section_type === 'table_of_contents') ? 'false' : 'true' }}"
+                                                 spellcheck="false"
+                                                 data-placeholder="Ketik narasi {{ $activeFrontSection->sub_bab_title }} di sini..."
+                                                 data-section-id="{{ $activeFrontSection->id }}"
+                                                 onkeydown="{{ ($formatConfig['allow_bold'] ?? false) ? '' : 'preventBoldShortcut(event)' }}"
+                                                 oninput="{{ ($isReadOnly || $activeFrontSection->section_type === 'table_of_contents') ? '' : "saveSectionAjax('{$activeFrontSection->id}')" }}">
+                                                {!! $activeFrontSection->content !!}
+                                            </div>
+                                        </div>
                                     </div>
                                 @endif
 
@@ -1041,16 +1139,15 @@
                                         </div>
                                     @endif
 
-                                    <!-- JUDUL BAB UTAMA -->
+                                    <!-- JUDUL BAB UTAMA (HEADING TENGAH) -->
                                     @php
                                         $rawBabTitle = $activeSubBabs->first()->bab_title ?? '';
                                         $babTitleDefaults = [
-                                            'BAB I' => 'PENDAHULUAN',
-                                            'BAB II' => 'EVALUASI PELAKSANAAN RENJA PERANGKAT DAERAH TAHUN LALU',
-                                            'BAB III' => 'TUJUAN DAN SASARAN PERANGKAT DAERAH',
-                                            'BAB IV' => 'RENCANA KERJA DAN PENDANAAN PERANGKAT DAERAH',
-                                            'BAB V' => 'TARGET KINERJA DAN INDIKATOR PROGRAM/KEGIATAN',
-                                            'BAB VI' => 'PENUTUP',
+                                             'BAB I' => 'PENDAHULUAN',
+                                             'BAB II' => 'HASIL EVALUASI RENJA PERANGKAT DAERAH TAHUN LALU',
+                                             'BAB III' => 'TUJUAN DAN SASARAN PERANGKAT DAERAH',
+                                             'BAB IV' => 'RENCANA KERJA DAN PENDANAAN PERANGKAT DAERAH',
+                                             'BAB V' => 'PENUTUP',
                                         ];
                                         
                                         if (empty($rawBabTitle) || strtoupper(trim($rawBabTitle)) === strtoupper(trim($activeBabCode))) {
@@ -1060,8 +1157,8 @@
                                         }
                                         $isCanonicalBab = in_array(strtoupper(trim($activeBabCode)), ['BAB I', 'BAB II', 'BAB III', 'BAB IV', 'BAB V']);
                                     @endphp
-                                    <div id="bab-header-main" class="bab-heading-block mb-6 relative group">
-                                        <div style="text-align: center; text-transform: uppercase; font-family: 'Bookman Old Style', 'Bookman', serif; font-size: 12pt; margin-bottom: 16pt; font-weight: normal !important;">
+                                    <div id="bab-header-main" class="bab-heading-block mb-2 relative group">
+                                        <div style="text-align: center; text-transform: uppercase; font-family: 'Bookman Old Style', 'Bookman', serif; font-size: 12pt; margin-bottom: 4pt; line-height: 1.5; font-weight: normal !important;">
                                             <div style="font-weight: normal !important;">{{ $activeBabCode }}</div>
                                             @if(!empty($displayBabTitle) && $displayBabTitle !== $activeBabCode)
                                                 <div style="font-weight: normal !important;">{{ $displayBabTitle }}</div>
@@ -1085,32 +1182,49 @@
                                         @endif
                                     </div>
 
-                                    <!-- SUB-BAB SECTIONS LOOP -->
-                                    @forelse($activeSubBabs as $sec)
+                                    <!-- AREA KETIK NARASI PADA TINGKAT BAB & SUB-BAB -->
+                                    @php
+                                        $chapterSec = $activeSubBabs->firstWhere('section_type', 'chapter');
+                                        $actualSubBabs = $activeSubBabs->where('section_type', '!=', 'chapter');
+                                    @endphp
+
+                                    @if($chapterSec)
+                                        <!-- AREA KETIK LANGSUNG PADA BAB UTAMA -->
+                                        <div id="section-content-{{ $chapterSec->id }}"
+                                             class="subbab-content mb-6"
+                                             contenteditable="{{ $isReadOnly ? 'false' : 'true' }}"
+                                             spellcheck="false"
+                                             data-placeholder="Ketik narasi {{ $activeBabCode }} di sini..."
+                                             data-section-id="{{ $chapterSec->id }}"
+                                             onkeydown="{{ ($formatConfig['allow_bold'] ?? false) ? '' : 'preventBoldShortcut(event)' }}"
+                                             oninput="{{ $isReadOnly ? '' : "saveSectionAjax('{$chapterSec->id}')" }}">
+                                            {!! $chapterSec->content !!}
+                                        </div>
+                                    @endif
+
+                                    <!-- SUB-BAB YANG DITAMBAHKAN PADA BAB INI -->
+                                    @foreach($actualSubBabs as $sec)
                                         @php
                                             $cleanSubTitle = preg_replace('/^\d+(\.\d+)*\s*/', '', $sec->sub_bab_title);
-                                            $isCanonicalSub = !empty($sec->template_section_id) || ($sec->is_required ?? false);
                                         @endphp
-                                        <div class="subbab-wrapper mb-6" id="section-wrapper-{{ $sec->id }}">
+                                        <div class="subbab-wrapper mb-8" id="section-wrapper-{{ $sec->id }}">
                                             
-                                            <!-- HEADER BAR SUB-BAB -->
-                                            <div class="subbab-header-bar flex items-center justify-between group">
-                                                <div class="flex items-center space-x-2 font-normal text-slate-900" style="font-family:'Bookman Old Style', 'Bookman', serif; font-size:12pt; font-weight: normal !important; color: #000000;">
+                                            <!-- JUDUL SUB-BAB MENYATU ALAMI DENGAN NASKAH (TYPOGRAPHY RESMI) -->
+                                            <div class="subbab-title-line flex items-baseline justify-between group mb-2">
+                                                <div class="font-normal text-slate-900 leading-snug" style="font-family:'Bookman Old Style', 'Bookman', serif; font-size:12pt; font-weight: normal !important; color: #000000;">
                                                     <span style="font-weight: normal !important; color:#000000;">{{ $sec->sub_bab_code }}</span>
-                                                    <span id="subbab-title-text-{{ $sec->id }}" style="font-weight: normal !important; color:#000000;">{{ $cleanSubTitle }}</span>
-                                                    @if(!$isReadOnly && !$isCanonicalSub)
-                                                        <button onclick="openEditSubBabModal('{{ $sec->id }}', '{{ e($sec->sub_bab_code) }}', '{{ e($cleanSubTitle) }}')" class="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-amber-600 text-xs transition" title="Edit Judul Sub-Bab">
-                                                            <i class="fa-solid fa-pen-to-square"></i>
-                                                        </button>
-                                                    @endif
+                                                    <span id="subbab-title-text-{{ $sec->id }}" style="font-weight: normal !important; color:#000000; margin-left: 4px;">{{ $cleanSubTitle }}</span>
                                                 </div>
 
-                                                @if(!$isReadOnly && !$isCanonicalSub)
-                                                    <div class="flex items-center space-x-2">
+                                                @if(!$isReadOnly)
+                                                    <div class="flex items-center space-x-1.5 opacity-0 group-hover:opacity-100 transition bg-white/95 px-2 py-0.5 rounded-lg border border-slate-200 shadow-2xs">
+                                                        <button onclick="openEditSubBabModal('{{ $sec->id }}', '{{ e($sec->sub_bab_code) }}', '{{ e($cleanSubTitle) }}')" class="text-amber-700 hover:text-amber-900 text-xs transition cursor-pointer" title="Edit Judul Sub-Bab">
+                                                            <i class="fa-solid fa-pen-to-square"></i>
+                                                        </button>
                                                         <form action="{{ route('renja.editor.deleteSection', [$document->id, $sec->id]) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus Sub-Bab {{ $sec->sub_bab_code }} {{ e($cleanSubTitle) }}?')" class="inline">
                                                             @csrf
                                                             @method('DELETE')
-                                                            <button type="submit" class="text-rose-400 hover:text-rose-600 text-xs p-1" title="Hapus Sub-Bab">
+                                                            <button type="submit" class="text-rose-500 hover:text-rose-700 text-xs cursor-pointer" title="Hapus Sub-Bab">
                                                                 <i class="fa-solid fa-trash-can"></i>
                                                             </button>
                                                         </form>
@@ -1118,34 +1232,43 @@
                                                 @endif
                                             </div>
 
-                                            <!-- AREA KETIK NARASI SUB-BAB -->
+                                            <!-- AREA KETIK NARASI SUB-BAB MENYATU ALAMI -->
                                             <div id="section-content-{{ $sec->id }}"
                                                  class="subbab-content"
-                                                 contenteditable="true"
+                                                 contenteditable="{{ $isReadOnly ? 'false' : 'true' }}"
                                                  spellcheck="false"
+                                                 data-placeholder="Ketik narasi {{ $sec->sub_bab_code }} {{ $cleanSubTitle }} di sini..."
                                                  data-section-id="{{ $sec->id }}"
                                                  onkeydown="{{ ($formatConfig['allow_bold'] ?? false) ? '' : 'preventBoldShortcut(event)' }}"
-                                                 oninput="saveSectionAjax('{{ $sec->id }}')">
+                                                 oninput="{{ $isReadOnly ? '' : "saveSectionAjax('{$sec->id}')" }}">
                                                 {!! $sec->content !!}
                                             </div>
 
                                         </div>
-                                    @empty
-                                        <div class="text-center py-16 text-gray-400 text-sm">
-                                            <i class="fa-solid fa-file-circle-plus text-3xl mb-3 text-gray-300"></i>
-                                            <p>Belum ada Sub-Bab pada {{ $activeBabCode }}.</p>
-                                            <p class="text-xs text-gray-400 mt-1">Klik tombol <strong class="text-emerald-600">+ Sub-Bab Baru</strong> di atas untuk menambah.</p>
-                                        </div>
-                                    @endforelse
+                                    @endforeach
 
-                                    <!-- BUTTON TAMBAH SUB-BAB BARU PADA KANVAS -->
-                                    <div class="mt-6 pt-4 border-t border-dashed border-gray-200 flex justify-center select-none">
-                                        <button onclick="document.getElementById('modal-add-subbab').classList.remove('hidden')" 
-                                                class="px-5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-bold transition flex items-center space-x-2 shadow-xs group">
-                                            <i class="fa-solid fa-plus text-emerald-600 group-hover:scale-110 transition"></i>
-                                            <span>Tambah Sub-Bab Baru pada {{ $activeBabCode }}</span>
-                                        </button>
-                                    </div>
+                                    @if(!$isReadOnly)
+                                        {{-- BUTTON TAMBAH SUB-BAB BARU & HAPUS SEMUA SUB-BAB PADA KANVAS --}}
+                                        <div class="mt-6 pt-4 border-t border-dashed border-gray-200 flex justify-center items-center gap-3 select-none no-print">
+                                            <button onclick="document.getElementById('modal-add-subbab').classList.remove('hidden')"
+                                                    class="px-5 py-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-bold transition flex items-center space-x-2 shadow-xs group cursor-pointer">
+                                                <i class="fa-solid fa-plus text-emerald-600 group-hover:scale-110 transition"></i>
+                                                <span>+ Tambah Sub-Bab Baru pada {{ $activeBabCode }}</span>
+                                            </button>
+                                            <form action="{{ route('renja.editor.deleteAllSubBab', $document->id) }}" method="POST"
+                                                  onsubmit="return confirm('⚠️ PERHATIAN: Seluruh Sub-Bab dan konten isi dokumen akan dihapus permanen.\n\nFront-matter (cover, kata pengantar, dll.) akan tetap dipertahankan.\n\nLanjutkan penghapusan?')"
+                                                  class="inline">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                        class="px-5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-300 rounded-lg text-xs font-bold transition flex items-center space-x-2 shadow-xs group cursor-pointer"
+                                                        title="Hapus seluruh Sub-Bab dari dokumen ini">
+                                                    <i class="fa-solid fa-trash-can text-rose-500 group-hover:scale-110 transition"></i>
+                                                    <span>Hapus Semua Sub-Bab</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    @endif
                                 @endif
 
                             </section>
@@ -1163,10 +1286,12 @@
                         <h2 class="text-lg font-bold text-gray-900">Tabel Evaluasi & Matriks Anggaran SIPD</h2>
                         <p class="text-xs text-gray-500">Tabel realisasi dan perkiraan anggaran SKPD terintegrasi dengan SIPD RI.</p>
                     </div>
+                    @if(!$isReadOnly)
                     <button onclick="document.getElementById('modal-add-sipd').classList.remove('hidden')" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs px-4 py-2 rounded-lg shadow transition flex items-center space-x-1.5">
                         <i class="fa-solid fa-plus text-xs"></i>
                         <span>Tambah Tabel SIPD</span>
                     </button>
+                    @endif
                 </div>
 
                 <div class="overflow-x-auto border border-gray-200 rounded-lg">
@@ -1183,12 +1308,12 @@
                         <tbody class="divide-y divide-gray-200">
                             @forelse($document->tableEvals as $eval)
                                 <tr class="hover:bg-gray-50">
-                                    <td class="p-3 font-mono font-bold text-gray-900">{{ $eval->kode_program }}</td>
-                                    <td class="p-3 font-medium">{{ $eval->nama_program }}</td>
-                                    <td class="p-3 text-right font-mono">Rp {{ number_format($eval->pagu_rkpd, 0, ',', '.') }}</td>
-                                    <td class="p-3 text-right font-mono text-emerald-700 font-bold">Rp {{ number_format($eval->realisasi_pagu ?? $eval->pagu_rkpd, 0, ',', '.') }}</td>
+                                    <td class="p-3 font-mono font-bold text-gray-900">{{ $eval->kode_rekening }}</td>
+                                    <td class="p-3 font-medium">{{ $eval->nama_program_kegiatan }}</td>
+                                    <td class="p-3 text-right font-mono">Rp {{ number_format($eval->pagu_indikatif, 0, ',', '.') }}</td>
+                                    <td class="p-3 text-right font-mono text-emerald-700 font-bold">Rp {{ number_format($eval->realisasi_pagu ?? 0, 0, ',', '.') }}</td>
                                     <td class="p-3 text-center">
-                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">100%</span>
+                                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">{{ $eval->pagu_indikatif > 0 ? number_format(($eval->realisasi_pagu ?? 0) / $eval->pagu_indikatif * 100, 1, ',', '.') . '%' : '-' }}</span>
                                     </td>
                                 </tr>
                             @empty
@@ -1228,6 +1353,31 @@
     </div>
 
     <!-- MODAL PILIH JENIS DOKUMEN TEMPLATE -->
+    @if(!$isReadOnly)
+    <div id="modal-add-sipd" class="hidden fixed inset-0 bg-slate-900/60 z-[100] flex items-center justify-center p-4">
+        <form method="POST" action="{{ route('renja.editor.addTableEval', $document->id) }}" class="bg-white rounded-xl p-6 w-full max-w-lg space-y-3 max-h-[90vh] overflow-y-auto">
+            @csrf
+            <h2 class="font-bold">Tambah Tabel Evaluasi SIPD</h2>
+            <label class="block">Jenis tabel
+                <select name="jenis_tabel" required class="block w-full border rounded p-2">
+                    <option value="evaluasi_2.1">Evaluasi 2.1</option>
+                    <option value="review_rkpd_2.4">Review RKPD 2.4</option>
+                </select>
+            </label>
+            @foreach(['kode_rekening' => 'Kode rekening', 'nama_program_kegiatan' => 'Program / kegiatan', 'indikator_kinerja' => 'Indikator kinerja', 'target_capaian' => 'Target capaian', 'realisasi_capaian' => 'Realisasi capaian'] as $field => $label)
+                <label class="block">{{ $label }}<input name="{{ $field }}" maxlength="255" @required(in_array($field, ['kode_rekening', 'nama_program_kegiatan', 'indikator_kinerja'])) class="block w-full border rounded p-2"></label>
+            @endforeach
+            @foreach(['pagu_indikatif' => 'Pagu indikatif (Rp)', 'realisasi_pagu' => 'Realisasi (Rp)'] as $field => $label)
+                <label class="block">{{ $label }}<input type="number" name="{{ $field }}" min="0" step="0.01" class="block w-full border rounded p-2"></label>
+            @endforeach
+            <div class="flex gap-3">
+                <button type="submit" class="bg-emerald-700 text-white rounded px-4 py-2">Simpan</button>
+                <button type="button" onclick="document.getElementById('modal-add-sipd').classList.add('hidden')">Batal</button>
+            </div>
+        </form>
+    </div>
+    @endif
+
     <div id="modal-select-template" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 space-y-4 max-h-[85vh] flex flex-col border border-slate-200">
             <div class="flex justify-between items-center border-b pb-3 shrink-0">
@@ -1402,48 +1552,46 @@
     @endif
 
     <!-- MODAL EDIT JUDUL SUB-BAB -->
-    @if($activeSection)
     <div id="modal-edit-subbab" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4 max-h-[85vh] flex flex-col border border-slate-200">
             <div class="flex justify-between items-center border-b pb-3 shrink-0">
                 <h3 class="font-extrabold text-slate-900 text-sm flex items-center space-x-2">
                     <i class="fa-solid fa-pen-to-square text-emerald-600"></i>
-                    <span>Edit Sub-Bab {{ $activeSection->sub_bab_code }}</span>
+                    <span id="modal-edit-subbab-heading">Edit Sub-Bab</span>
                 </h3>
                 <button onclick="document.getElementById('modal-edit-subbab').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
                     <i class="fa-solid fa-xmark text-base"></i>
                 </button>
             </div>
-            <form action="{{ route('renja.editor.updateSubBabTitle', [$document->id, $activeSection->id]) }}" method="POST" class="space-y-4 text-xs overflow-y-auto flex-1 pr-1">
+            <form id="form-edit-subbab" action="" method="POST" class="space-y-4 text-xs overflow-y-auto flex-1 pr-1">
                 @csrf
                 <div class="grid grid-cols-3 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 mb-1">Nomor Sub-Bab</label>
-                        <input type="text" name="sub_bab_code" value="{{ $activeSection->sub_bab_code }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs font-bold text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <input type="text" id="modal-edit-subbab-code" name="sub_bab_code" value="" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs font-bold text-gray-800 focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     </div>
                     <div class="col-span-2">
                         <label class="block text-xs font-bold text-gray-700 mb-1">Nama Sub-Bab (Manual)</label>
-                        <input type="text" name="sub_bab_title" value="{{ preg_replace('/^\d+(\.\d+)*\s*/', '', $activeSection->sub_bab_title) }}" required placeholder="Contoh: Latar Belakang" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        <input type="text" id="modal-edit-subbab-title" name="sub_bab_title" value="" required placeholder="Contoh: Latar Belakang" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     </div>
                 </div>
                 <div class="flex justify-between items-center pt-2 shrink-0">
-                    <button type="button" onclick="if(confirm('Hapus sub-bab ini?')){ document.getElementById('form-delete-subbab').submit(); }" class="px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold rounded-lg transition flex items-center space-x-1">
+                    <button type="button" onclick="deleteCurrentSubBabFromModal()" class="px-3 py-2 bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold rounded-lg transition flex items-center space-x-1 cursor-pointer">
                         <i class="fa-solid fa-trash"></i>
                         <span>Hapus Sub-Bab</span>
                     </button>
                     <div class="flex space-x-2">
-                        <button type="button" onclick="document.getElementById('modal-edit-subbab').classList.add('hidden')" class="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg">Batal</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-lg shadow">Simpan</button>
+                        <button type="button" onclick="document.getElementById('modal-edit-subbab').classList.add('hidden')" class="px-4 py-2 bg-gray-100 text-gray-700 text-xs font-bold rounded-lg cursor-pointer">Batal</button>
+                        <button type="submit" class="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold rounded-lg shadow cursor-pointer">Simpan</button>
                     </div>
                 </div>
             </form>
-            <form id="form-delete-subbab" action="{{ route('renja.editor.deleteSection', [$document->id, $activeSection->id]) }}" method="POST" class="hidden">
+            <form id="form-delete-subbab" action="" method="POST" class="hidden">
                 @csrf
                 @method('DELETE')
             </form>
         </div>
     </div>
-    @endif
 
     <!-- MODAL ADD SUB-BAB BARU -->
     <div id="modal-add-subbab" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
@@ -1536,7 +1684,7 @@
                 </div>
                 <div class="flex justify-end space-x-2 pt-2 border-t shrink-0">
                     <button type="button" onclick="document.getElementById('modal-edit-bab-title').classList.add('hidden')" class="px-4 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg">Batal</button>
-                    <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow">Simpan Judul BAB</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow">Simpan Judul BAB</button>
                 </div>
             </form>
         </div>
@@ -1577,6 +1725,45 @@
             <div class="flex justify-end pt-2 border-t border-slate-100">
                 <button type="button" onclick="document.getElementById('modal-word-table-tools').classList.add('hidden')" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg transition">
                     Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PENOMORAN & JUDUL TABEL OTOMATIS -->
+    <div id="modal-table-caption" class="hidden fixed inset-0 z-[110] overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-gray-200 p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div class="flex justify-between items-center border-b border-gray-100 pb-3">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-table"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-sm">Beri Judul & Nomor Tabel Otomatis</h3>
+                        <p class="text-[11px] text-gray-500">Judul tabel akan otomatis terdata ke Daftar Tabel</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeTableCaptionModal()" class="text-gray-400 hover:text-gray-600 text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Nomor Tabel</label>
+                    <input type="text" id="modal-caption-number" class="w-full text-xs border border-gray-300 rounded-lg px-3 py-2 font-mono font-bold focus:ring-2 focus:ring-amber-500" placeholder="mis. Tabel 2.1">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 mb-1">Judul Tabel</label>
+                    <textarea id="modal-caption-text" rows="2" class="w-full text-xs border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-amber-500" placeholder="mis. Rekapitulasi Evaluasi Renja Perangkat Daerah Tahun Lalu"></textarea>
+                </div>
+                <p class="text-[11px] text-gray-500 italic">Posisi judul tabel standar resmi diletakkan tepat di atas tabel (caption) dan disinkronkan ke Daftar Tabel dokumen.</p>
+            </div>
+
+            <div class="flex justify-end items-center space-x-2 pt-2 border-t border-gray-100">
+                <button type="button" onclick="closeTableCaptionModal()" class="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg">Batal</button>
+                <button type="button" onclick="saveTableCaptionFromModal()" class="px-4 py-2 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Terapkan Judul Tabel</span>
                 </button>
             </div>
         </div>
@@ -2006,20 +2193,394 @@
 
         function openEditSubBabModal(sectionId, code, title) {
             const form = document.getElementById('form-edit-subbab');
-            const codeInput = document.getElementById('modal-edit-subbab')?.querySelector('input[name="sub_bab_code"]');
-            const titleInput = document.getElementById('modal-edit-subbab')?.querySelector('input[name="sub_bab_title"]');
+            const formDelete = document.getElementById('form-delete-subbab');
+            const codeInput = document.getElementById('modal-edit-subbab-code');
+            const titleInput = document.getElementById('modal-edit-subbab-title');
+            const heading = document.getElementById('modal-edit-subbab-heading');
             const modal = document.getElementById('modal-edit-subbab');
 
             if (form && modal) {
                 form.action = `/renja-documents/{{ $document->id }}/sections/${sectionId}/update-title`;
+                if (formDelete) formDelete.action = `/renja-documents/{{ $document->id }}/sections/${sectionId}`;
+                if (heading) heading.innerText = 'Edit Sub-Bab ' + code;
                 if (codeInput) codeInput.value = code;
                 if (titleInput) titleInput.value = title;
                 modal.classList.remove('hidden');
             }
         }
 
+        function deleteCurrentSubBabFromModal() {
+            if (confirm('Apakah Anda yakin ingin menghapus sub-bab ini?')) {
+                const formDelete = document.getElementById('form-delete-subbab');
+                if (formDelete && formDelete.action) {
+                    allowNavigation();
+                    formDelete.submit();
+                }
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
         function refreshAutomaticLists() {
-            toastOk('Daftar Isi, Tabel, Gambar, dan Lampiran berhasil diperbarui otomatis.');
+            toastInfo('Memperbarui Daftar Isi, Tabel, Gambar, dan Lampiran...');
+            fetch(`/renja-documents/{{ $document->id }}/refresh-indexes`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    toastOk(data.message || 'Daftar Isi, Tabel, Gambar, dan Lampiran berhasil diperbarui otomatis.');
+                    const isFront = {{ $isFrontView ? 'true' : 'false' }};
+                    if (isFront) {
+                        setTimeout(() => window.location.reload(), 800);
+                    }
+                }
+            })
+            .catch(err => {
+                console.error("Refresh error:", err);
+                toastWarn('Gagal memperbarui daftar indeks.');
+            });
+        }
+
+        // =========================================================================
+        // SMART CLIPBOARD PASTE HANDLER (WORD / EXCEL / GOOGLE DOCS / TSV)
+        // =========================================================================
+        document.addEventListener('paste', function(e) {
+            const editor = e.target.closest('[contenteditable="true"]');
+            if (!editor) return;
+
+            const clipboardData = e.clipboardData || window.clipboardData;
+            if (!clipboardData) return;
+
+            const html = clipboardData.getData('text/html');
+            const text = clipboardData.getData('text/plain');
+
+            // 1. Prioritas: Deteksi Tabel HTML (dari MS Word, Excel, Google Docs, atau Web)
+            if (html && html.toLowerCase().includes('<table')) {
+                e.preventDefault();
+                handlePastedTableHtml(html, editor);
+                return;
+            }
+
+            // 2. Deteksi data TSV langsung dari Excel / Google Sheets (tab-separated)
+            if (text && text.includes('\t') && text.includes('\n')) {
+                e.preventDefault();
+                handlePastedTsv(text, editor);
+                return;
+            }
+
+            // 3. Deteksi teks MS Word berantakan (mso-* tags / styling kotor)
+            if (html && (html.includes('mso-') || html.includes('urn:schemas-microsoft-com'))) {
+                e.preventDefault();
+                handlePastedWordText(html, text, editor);
+                return;
+            }
+        });
+
+        function handlePastedTableHtml(rawHtml, editor) {
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(rawHtml, 'text/html');
+                const tables = doc.querySelectorAll('table');
+
+                if (tables.length === 0) {
+                    document.execCommand('insertHTML', false, rawHtml);
+                    return;
+                }
+
+                tables.forEach(table => {
+                    // Bersihkan attribute dan class bawaan Word/Excel yang merusak layout F4
+                    table.removeAttribute('class');
+                    table.removeAttribute('width');
+                    table.removeAttribute('height');
+                    table.removeAttribute('cellspacing');
+                    table.removeAttribute('cellpadding');
+                    table.removeAttribute('border');
+
+                    // Standarisasi styling tabel agar rapi, bergaris jelas, dan pas dalam batas margin F4
+                    table.style.width = '100%';
+                    table.style.maxWidth = '100%';
+                    table.style.borderCollapse = 'collapse';
+                    table.style.marginTop = '8pt';
+                    table.style.marginBottom = '12pt';
+                    table.style.fontSize = '10pt';
+                    table.style.fontFamily = "'Bookman Old Style', 'Bookman', Georgia, serif";
+                    table.style.tableLayout = 'auto';
+                    table.style.wordBreak = 'break-word';
+
+                    // Cek elemen caption jika ada
+                    const caption = table.querySelector('caption');
+                    if (caption) {
+                        caption.style.captionSide = 'top';
+                        caption.style.fontFamily = "'Bookman Old Style', 'Bookman', Georgia, serif";
+                        caption.style.fontSize = '11pt';
+                        caption.style.fontWeight = 'normal';
+                        caption.style.textAlign = 'center';
+                        caption.style.padding = '4pt 0';
+                        caption.style.color = '#000000';
+                    }
+
+                    const rows = table.querySelectorAll('tr');
+                    rows.forEach((tr, rIdx) => {
+                        tr.removeAttribute('class');
+                        tr.removeAttribute('height');
+                        tr.style.height = 'auto';
+
+                        const cells = tr.querySelectorAll('td, th');
+                        cells.forEach(cell => {
+                            cell.removeAttribute('class');
+                            cell.removeAttribute('width');
+                            cell.removeAttribute('height');
+
+                            // Kritis: Pertahankan merge cell (colspan & rowspan)
+                            const isTh = cell.tagName.toLowerCase() === 'th' || (rIdx === 0 && rows.length > 1);      
+                            cell.style.border = '0.5pt solid #000000';
+                            cell.style.padding = '4pt 6pt';
+                            cell.style.verticalAlign = 'top';
+                            cell.style.fontSize = '10pt';
+                            cell.style.lineHeight = '1.3';
+                            cell.style.wordBreak = 'break-word';
+
+                            if (isTh) {
+                                cell.style.backgroundColor = '#F9FAFB';
+                                cell.style.fontWeight = 'bold';
+                                cell.style.textAlign = cell.style.textAlign || 'center';
+                            }
+
+                            // Bersihkan paragraf bersarang berjarak besar di dalam sel
+                            cell.querySelectorAll('p').forEach(p => {
+                                p.style.margin = '0';
+                                p.style.padding = '0';
+                                p.style.textIndent = '0';
+                                p.style.lineHeight = '1.3';
+                            });
+                        });
+                    });
+                });
+
+                const wrapper = document.createElement('div');
+                tables.forEach(t => wrapper.appendChild(t));
+                const pAfter = document.createElement('p');
+                pAfter.innerHTML = '<br>';
+                wrapper.appendChild(pAfter);
+
+                document.execCommand('insertHTML', false, wrapper.innerHTML);
+
+                const sectionId = editor.getAttribute('data-section-id');
+                if (sectionId) {
+                    saveSectionAjax(sectionId);
+                }
+                toastOk('Tabel berhasil disisipkan dengan struktur utuh dan format standar F4.');
+            } catch (err) {
+                console.error("Paste Table Error:", err);
+                document.execCommand('insertHTML', false, rawHtml);
+            }
+        }
+
+        function handlePastedTsv(tsvText, editor) {
+            const lines = tsvText.trim().split(/\r\n|\n|\r/);
+            if (lines.length === 0) return;
+
+            let html = '<table style="width: 100%; max-width: 100%; border-collapse: collapse; margin-top: 8pt; margin-bottom: 12pt; font-family: \'Bookman Old Style\', Georgia, serif; font-size: 10pt; table-layout: auto;">';
+
+            lines.forEach((line, rIdx) => {
+                const cells = line.split('\t');
+                html += '<tr>';
+                const isHeader = (rIdx === 0 && lines.length > 1);
+                cells.forEach(cellText => {
+                    const tag = isHeader ? 'th' : 'td';
+                    const bg = isHeader ? 'background-color: #F9FAFB; font-weight: bold; text-align: center;' : '';
+                    html += `<${tag} style="border: 0.5pt solid #000000; padding: 4pt 6pt; vertical-align: top; font-size: 10pt; line-height: 1.3; ${bg}">${escapeHtml(cellText.trim()) || '&nbsp;'}</${tag}>`;
+                });
+                html += '</tr>';
+            });
+            html += '</table><p><br></p>';
+
+            document.execCommand('insertHTML', false, html);
+
+            const sectionId = editor.getAttribute('data-section-id');
+            if (sectionId) {
+                saveSectionAjax(sectionId);
+            }
+            toastOk('Data Excel berhasil ditempel sebagai tabel rapi standar F4.');
+        }
+
+        function handlePastedWordText(html, text, editor) {
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+
+            doc.querySelectorAll('style, script, meta, link, xml').forEach(el => el.remove());
+
+            doc.querySelectorAll('*').forEach(el => {
+                el.removeAttribute('class');
+                if (el.getAttribute('style')) {
+                    let s = el.getAttribute('style');
+                    s = s.replace(/mso-[^;]+;?/gi, '');
+                    s = s.replace(/font-family:[^;]+;?/gi, '');
+                    el.setAttribute('style', s.trim());
+                    if (!el.getAttribute('style')) el.removeAttribute('style');
+                }
+            });
+
+            let cleaned = doc.body.innerHTML;
+            const allowBold = {{ ($formatConfig['allow_bold'] ?? false) ? 'true' : 'false' }};
+            if (!allowBold) {
+                cleaned = cleaned.replace(/<(strong|b)(\s+[^>]*)?>/gi, '').replace(/<\/(strong|b)>/gi, '');
+                cleaned = cleaned.replace(/font-weight\s*:\s*(bold|[6-9]00)\s*;?/gi, '');
+            }
+
+            document.execCommand('insertHTML', false, cleaned || escapeHtml(text));
+            const sectionId = editor.getAttribute('data-section-id');
+            if (sectionId) {
+                saveSectionAjax(sectionId);
+            }
+        }
+
+        function tableAutoFitF4() {
+            const table = getActiveTable();
+            if (!table) {
+                toastWarn('Klik pada tabel terlebih dahulu.');
+                return;
+            }
+            table.style.width = '100%';
+            table.style.maxWidth = '100%';
+            table.style.tableLayout = 'auto';
+            table.style.borderCollapse = 'collapse';
+            table.style.margin = '8pt 0 12pt 0';
+            Array.from(table.querySelectorAll('th, td')).forEach(c => {
+                c.removeAttribute('width');
+                c.style.width = 'auto';
+                c.style.border = '0.5pt solid #000000';
+                c.style.padding = '4pt 6pt';
+                c.style.fontSize = '10pt';
+                c.style.lineHeight = '1.3';
+            });
+            const editor = table.closest('[contenteditable="true"]');
+            if (editor) {
+                const sectionId = editor.getAttribute('data-section-id');
+                if (sectionId) saveSectionAjax(sectionId);
+            }
+            toastOk('Lebar tabel dirapikan sesuai margin resmi F4 (100% proporsional).');
+        }
+
+        // =========================================================================
+        // TABEL CAPTION / PENOMORAN OTOMATIS
+        // =========================================================================
+        let targetTableForCaption = null;
+
+        function openTableCaptionModal() {
+            const table = getActiveTable();
+            if (!table) {
+                toastWarn('Klik pada tabel yang ingin diberi judul/nomor terlebih dahulu.');
+                return;
+            }
+            targetTableForCaption = table;
+
+            const babCode = '{{ $activeBabCode }}';
+            let roman = babCode.replace(/^BAB\s+/i, '').trim();
+            let num = '1';
+            if (roman === 'I') num = '1';
+            else if (roman === 'II') num = '2';
+            else if (roman === 'III') num = '3';
+            else if (roman === 'IV') num = '4';
+            else if (roman === 'V') num = '5';
+
+            const allTables = document.querySelectorAll('.subbab-content table');
+            let tableIndex = 1;
+            allTables.forEach((t, i) => {
+                if (t === table) tableIndex = i + 1;
+            });
+
+            const existingCap = table.querySelector('caption');
+            let currentTitle = '';
+            let currentNumber = `Tabel ${num}.${tableIndex}`;
+
+            if (existingCap) {
+                currentTitle = existingCap.innerText.replace(/^Tabel\s+[\d\.]+\s*[:\-]?\s*/i, '').trim();
+                const match = existingCap.innerText.match(/^Tabel\s+[\d\.]+/i);
+                if (match) currentNumber = match[0];
+            }
+
+            document.getElementById('modal-caption-number').value = currentNumber;
+            document.getElementById('modal-caption-text').value = currentTitle;
+            document.getElementById('modal-table-caption').classList.remove('hidden');
+        }
+
+        function closeTableCaptionModal() {
+            document.getElementById('modal-table-caption').classList.add('hidden');
+            targetTableForCaption = null;
+        }
+
+        function saveTableCaptionFromModal() {
+            if (!targetTableForCaption) return;
+
+            const num = document.getElementById('modal-caption-number').value.trim();
+            const title = document.getElementById('modal-caption-text').value.trim();
+
+            if (!title) {
+                toastWarn('Harap masukkan judul tabel.');
+                return;
+            }
+
+            const fullCaptionText = `${num} ${title}`.trim();
+
+            let cap = targetTableForCaption.querySelector('caption');
+            if (!cap) {
+                cap = document.createElement('caption');
+                targetTableForCaption.insertBefore(cap, targetTableForCaption.firstChild);
+            }
+            cap.style.captionSide = 'top';
+            cap.style.textAlign = 'center';
+            cap.style.fontFamily = "'Bookman Old Style', 'Bookman', Georgia, serif";
+            cap.style.fontSize = '11pt';
+            cap.style.fontWeight = 'normal';
+            cap.style.marginBottom = '6pt';
+            cap.style.color = '#000000';
+            cap.innerHTML = `<strong>${escapeHtml(num)}</strong> ${escapeHtml(title)}`;
+
+            let tableId = targetTableForCaption.getAttribute('data-table-id');
+            if (!tableId) {
+                tableId = 'tbl_' + Date.now();
+                targetTableForCaption.setAttribute('data-table-id', tableId);
+            }
+
+            const editor = targetTableForCaption.closest('[contenteditable="true"]');
+            const sectionId = editor ? editor.getAttribute('data-section-id') : null;
+
+            if (sectionId) {
+                fetch(`/renja-documents/{{ $document->id }}/sections/${sectionId}/caption`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        element_type: 'table',
+                        element_id: tableId,
+                        caption: fullCaptionText,
+                        display_number: num
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        saveSectionAjax(sectionId);
+                        toastOk('Judul tabel berhasil disimpan & otomatis masuk ke Daftar Tabel.');
+                    }
+                })
+                .catch(err => console.error("Caption save error:", err));
+            }
+
+            closeTableCaptionModal();
         }
 
         function submitInsertWordTable(e) {
@@ -2125,14 +2686,26 @@
         // Fitur 8: Unsaved Changes Warning Logic
         let hasUnsavedChanges = false;
 
+        // Hanya tandai "ada perubahan" saat user mengedit konten dokumen (contenteditable),
+        // bukan saat mengisi form modal (input/textarea di dalam modal).
         document.addEventListener('input', function(e) {
-            if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            if (e.target.isContentEditable) {
                 hasUnsavedChanges = true;
                 const dot = document.getElementById('autosave-dot');
                 const statusTxt = document.getElementById('autosave-status-text');
                 if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500 inline-block animate-ping';
                 if (statusTxt) statusTxt.innerText = '● Menyimpan...';
             }
+        });
+
+        // Fungsi global untuk izinkan navigasi (reset flag sebelum submit form)
+        window.allowNavigation = function() { hasUnsavedChanges = false; };
+
+        // Otomatis pasang allowNavigation() ke semua form yang melakukan navigasi server-side
+        document.querySelectorAll('form[action]').forEach(function(form) {
+            form.addEventListener('submit', function() {
+                hasUnsavedChanges = false;
+            });
         });
 
         window.addEventListener('beforeunload', function(e) {
@@ -2265,16 +2838,21 @@
                 </span>
             @endif
 
-            <!-- PREVIEW & EXPORT (DISABLED / COMING SOON - FITUR 5) -->
-            <button type="button" disabled class="st-btn st-btn-secondary st-btn-sm h-8 rounded-xl opacity-40 cursor-not-allowed text-xs px-3" title="Fitur Preview PDF akan hadir pada Sprint berikutnya">
-                <i class="fa-solid fa-eye text-xs"></i>
+            <!-- PREVIEW & EXPORT ACTIONS -->
+            <a href="{{ route('renja.preview-pdf', $document->id) }}" target="_blank" class="st-btn st-btn-secondary st-btn-sm h-8 rounded-xl text-xs px-3 font-bold hover:bg-slate-100 flex items-center gap-1.5 transition" title="Pratinjau Halaman PDF Cetak">
+                <i class="fa-solid fa-eye text-xs text-indigo-600"></i>
                 <span class="hidden md:inline">Preview PDF</span>
-            </button>
+            </a>
 
-            <button type="button" disabled class="st-btn st-btn-secondary st-btn-sm h-8 rounded-xl opacity-40 cursor-not-allowed text-xs px-3" title="Fitur Export Word akan hadir pada Sprint berikutnya">
-                <i class="fa-solid fa-file-word text-xs"></i>
+            <a href="{{ route('renja.editor.exportWord', $document->id) }}" class="st-btn st-btn-secondary st-btn-sm h-8 rounded-xl text-xs px-3 font-bold text-blue-700 hover:bg-blue-50 border-blue-200 flex items-center gap-1.5 transition" title="Unduh Dokumen MS Word (.docx) Format Resmi F4">
+                <i class="fa-solid fa-file-word text-xs text-blue-600"></i>
                 <span class="hidden md:inline">Export Word</span>
-            </button>
+            </a>
+
+            <a href="{{ route('renja.editor.exportPdf', $document->id) }}" class="st-btn st-btn-secondary st-btn-sm h-8 rounded-xl text-xs px-3 font-bold text-rose-700 hover:bg-rose-50 border-rose-200 flex items-center gap-1.5 transition" title="Unduh Dokumen PDF Format Resmi F4">
+                <i class="fa-solid fa-file-pdf text-xs text-rose-600"></i>
+                <span class="hidden md:inline">Export PDF</span>
+            </a>
         </div>
     </div>
 

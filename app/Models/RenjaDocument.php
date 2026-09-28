@@ -56,6 +56,11 @@ class RenjaDocument extends Model
         'year' => 'integer',
     ];
 
+    public function getStatusAttribute($value): string
+    {
+        return strtolower((string) $value);
+    }
+
     public function archivedByUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'archived_by_user_id');
@@ -466,7 +471,7 @@ class RenjaDocument extends Model
      */
     public function isEditableByOpd(): bool
     {
-        return in_array($this->status, ['draft', 'perlu_revisi', 'revisi', 'revision', 'belum_dikerjakan', 'autofix_completed', 'autofix_confirmed']);
+        return in_array(strtolower($this->status), ['draft', 'perlu_revisi', 'revisi', 'revision', 'belum_dikerjakan', 'autofix_completed', 'autofix_confirmed']);
     }
 
     /**
@@ -474,7 +479,7 @@ class RenjaDocument extends Model
      */
     public function isLocked(): bool
     {
-        return in_array($this->status, ['dikunci', 'final', 'disetujui', 'approved']) || $this->is_archived;
+        return in_array(strtolower($this->status), ['dikunci', 'final', 'disetujui', 'approved']) || $this->is_archived;
     }
 
     /**

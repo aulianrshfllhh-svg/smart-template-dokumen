@@ -174,7 +174,7 @@ class RenjaTest extends TestCase
         return [$opd, $operator];
     }
 
-    private function makeMinimalDocxFile(): \Illuminate\Http\UploadedFile
+    private function makeMinimalDocxFile(string $customText = ''): \Illuminate\Http\UploadedFile
     {
         $opd = MasterOpd::first() ?? MasterOpd::create([
             'nama_opd' => 'Kecamatan Test Upload',
@@ -187,6 +187,10 @@ class RenjaTest extends TestCase
             'opd_id' => $opd->id,
             'tahun_anggaran' => 2027,
         ]);
+
+        if (!empty($customText)) {
+            file_put_contents($result['file_path'], "\n<!-- " . $customText . " -->", FILE_APPEND);
+        }
 
         return new \Illuminate\Http\UploadedFile(
             $result['file_path'],
@@ -464,7 +468,7 @@ class RenjaTest extends TestCase
         $hash1 = $doc1->metadata['original_file_hash'];
 
         // Upload kedua (ganti file) — harus mengupdate record yang sama
-        $file2 = $this->makeMinimalDocxFile();
+        $file2 = $this->makeMinimalDocxFile('ganti-file-versi-2');
         $hash2Expected = hash_file('sha256', $file2->getRealPath());
 
         $this->post(route('operator.renja-murni.store-upload'), [

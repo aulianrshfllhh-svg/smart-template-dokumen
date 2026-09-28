@@ -21,15 +21,14 @@ class BapperidaMonitoringController extends Controller
      */
     public function index(Request $request)
     {
-        $tahunAnggaran = (int) $request->input('tahun_anggaran', session('active_ta', 2027));
+        $tahunAnggaran = (int) $request->input('tahun_anggaran', session('active_ta', (int) date('Y')));
         $search = $request->input('search');
         $statusFilter = $request->input('status');
 
         $query = MasterOpd::query();
 
         if ($search) {
-            $query->where('nama_opd', 'like', "%{$search}%")
-                  ->orWhere('kode_opd', 'like', "%{$search}%");
+            $query->where(fn ($q) => $q->where('nama_opd', 'like', "%{$search}%")->orWhere('kode_opd', 'like', "%{$search}%"));
         }
 
         $opds = $query->with(['documents' => function ($q) use ($tahunAnggaran) {
@@ -43,7 +42,6 @@ class BapperidaMonitoringController extends Controller
         $submittedCount = RenjaDocument::where('tahun_anggaran', $tahunAnggaran)->whereIn('status', ['submitted', 'menunggu_verifikasi'])->count();
         $underReviewCount = RenjaDocument::where('tahun_anggaran', $tahunAnggaran)->whereIn('status', ['sedang_direview', 'sedang_diperiksa'])->count();
         $approvedCount = RenjaDocument::where('tahun_anggaran', $tahunAnggaran)->whereIn('status', ['disetujui', 'approved', 'final'])->count();
-        
         $completionRate = $totalOpd > 0 ? round(($approvedCount / $totalOpd) * 100, 1) : 0;
 
         $stats = [

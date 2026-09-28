@@ -75,6 +75,33 @@ class RenjaDocumentController extends Controller
     }
 
     /**
+     * Tampilkan daftar dokumen milik Bapperida untuk Admin (Dokumen Saya Admin).
+     */
+    public function adminMyDocuments(Request $request)
+    {
+        $user = Auth::user();
+        abort_unless($user && $user->isAdmin(), 403, 'Hanya admin yang memiliki akses ke Dokumen Saya Bapperida.');
+
+        $opdId = $this->getEffectiveOpdIdForUser($user);
+
+        $filters = [
+            'search' => $request->query('search'),
+            'tahun_anggaran' => $request->query('tahun_anggaran'),
+            'jenis_dokumen' => $request->query('jenis_dokumen'),
+            'status' => $request->query('status'),
+            'sort' => $request->query('sort'),
+        ];
+
+        $workspaceData = $this->opdDocumentService->getOpdWorkspaceData($opdId, $filters, true);
+        $selectedTa = !empty($filters['tahun_anggaran']) && is_numeric($filters['tahun_anggaran'])
+            ? (int) $filters['tahun_anggaran']
+            : session('active_ta', (int) date('Y'));
+        $workspaceData['docFamilies'] = $this->documentRegistryService->getFamilies($selectedTa);
+
+        return view('renja.index', $workspaceData);
+    }
+
+    /**
      * Buat Dokumen Renja Murni baru pada Tahun Anggaran aktif.
      */
     public function storeMurni(Request $request)
@@ -87,6 +114,45 @@ class RenjaDocumentController extends Controller
             $doc = $this->opdDocumentService->createRenjaMurni($opdId, $ta);
             return redirect()->route('renja.workspace', ['tahun_anggaran' => $ta])
                 ->with('success', "Dokumen Renja Murni TA {$ta} berhasil dibuat.");
+        } catch (\Throwable $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Buat Dokumen Renja Murni baru dengan menyalin Renja Tahun Sebelumnya sebagai acuan.
+     */
+    public function cloneFromPreviousYear(Request $request)
+    {
+        $user = Auth::user();
+        $opdId = $this->getEffectiveOpdIdForUser($user);
+
+        $validated = $request->validate([
+            'source_document_id' => ['required', 'integer', 'exists:renja_documents,id'],
+            'tahun_anggaran' => ['required', 'integer', 'min:2020', 'max:2099'],
+        ], [
+            'source_document_id.required' => 'Dokumen acuan tahun sebelumnya wajib dipilih.',
+            'source_document_id.exists' => 'Dokumen acuan tidak ditemukan.',
+            'tahun_anggaran.required' => 'Tahun anggaran target wajib diisi.',
+        ]);
+
+        $sourceDocId = (int) $validated['source_document_id'];
+        $targetYear = (int) $validated['tahun_anggaran'];
+
+        try {
+            $doc = $this->opdDocumentService->cloneFromPreviousYear(
+                $sourceDocId,
+                $targetYear,
+                $opdId,
+                $user->id
+            );
+
+            return redirect()->route('renja.workspace', ['tahun_anggaran' => $targetYear])
+                ->with('success', "Dokumen RENJA Murni TA {$targetYear} berhasil dibuat dengan menyalin acuan tahun {$doc->metadata['cloned_from_tahun_anggaran']}.");
+        } catch (\Symfony\Component\HttpKernel\Exception\HttpExceptionInterface $e) {
+            throw $e;
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            abort(403, $e->getMessage());
         } catch (\Throwable $e) {
             return back()->with('error', $e->getMessage());
         }
@@ -158,6 +224,7 @@ class RenjaDocumentController extends Controller
     {
         $user = Auth::user();
         $opdId = $request->input('opd_id') ? (int)$request->input('opd_id') : $this->getEffectiveOpdIdForUser($user);
+        abort_if($user->isOperator() && (!$user->opd_id || $opdId !== (int) $user->opd_id), 403);
 
         $validated = $request->validate([
             'variant_key' => ['nullable', 'string'],
@@ -375,7 +442,7 @@ class RenjaDocumentController extends Controller
     public function update(Request $request, $id)
     {
         $document = RenjaDocument::findOrFail($id);
-        $this->authorizeDocumentAccess($document);
+        $this->authorize('update', $document);
 
         // Guardrail status
         if (in_array(strtolower($document->status), ['submitted', 'approved']) && Auth::user()->isOperator()) {
@@ -424,10 +491,13 @@ class RenjaDocumentController extends Controller
         $opdId = $user->opd_id ?? MasterOpd::first()?->id;
 
         $document = RenjaDocument::where('opd_id', $opdId)->findOrFail($id);
+        $this->authorize('view', $document);
 
         if (!in_array(strtolower($document->status), ['draft', 'belum_dikerjakan', 'perlu_revisi', 'revisi', 'revision', 'autofix_completed', 'autofix_confirmed'])) {
             return back()->with('error', 'Dokumen dengan status ' . strtoupper($document->status) . ' tidak dapat dikirim ulang.');
         }
+
+        abort_if($document->isLocked(), 403, 'Dokumen telah dikunci.');
 
         // Format Checker Guardrail: Hanya ijinkan submit jika format valid dan bebas blocking violations
         $isLampiranDoc = str_contains(strtolower($document->jenis_dokumen ?? ''), 'lampiran') || in_array($document->template?->code ?? '', ['RENJA_LAMPIRAN_MURNI', 'RENJA_LAMPIRAN_PERUBAHAN']);
@@ -478,7 +548,7 @@ class RenjaDocumentController extends Controller
         $user = Auth::user();
         $document = RenjaDocument::findOrFail($id);
 
-        $this->authorizeDocumentAccess($document);
+        $this->authorize('finalize', $document);
 
         $document->update([
             'status' => 'final',
@@ -802,6 +872,13 @@ class RenjaDocumentController extends Controller
 
         // 3. BAGIAN AWAL & BAGIAN UTAMA SECTIONS (Gunakan Live Effective Sections jika Lampiran)
         $sections = $isLampiran ? $document->getEffectiveSections() : $document->sections;
+        $htmlService = app(\App\Services\DocumentHtmlService::class);
+        $preserveLampiranExport = $htmlService->preservesLampiran($document);
+        if (!$preserveLampiranExport) {
+            foreach ($sections as $exportSection) {
+                $htmlService->assertEmbeddedImages($exportSection->content ?? '');
+            }
+        }
         $groupedSections = $sections->groupBy('bab_code');
         $frontSections = $isLampiran ? collect() : $sections->whereIn('section_type', ['cover', 'preface', 'table_of_contents', 'list_of_tables', 'list_of_figures', 'list_of_charts', 'list_of_appendices']);
         if ($isLampiran) {
@@ -843,9 +920,16 @@ class RenjaDocumentController extends Controller
 
                 if (!empty($sec->content)) {
                     $cleanHtml = $allowBold ? $sec->content : $this->sanitizeHtmlForRenja($sec->content);
+                    if (!$preserveLampiranExport) {
+                        $cleanHtml = $htmlService->forWord($cleanHtml);
+                    }
                     try {
                         \PhpOffice\PhpWord\Shared\Html::addHtml($section, $cleanHtml, false, false);
                     } catch (\Exception $e) {
+                        if (!$preserveLampiranExport && preg_match('/<(table|img)\b/i', $cleanHtml)) {
+                            report($e);
+                            throw \Illuminate\Validation\ValidationException::withMessages(['export' => 'Tabel atau gambar belum dapat dikonversi. Periksa format bagian tersebut lalu coba lagi.']);
+                        }
                         $section->addText(strip_tags($sec->content), ['size' => $fontSize, 'name' => $fontFamily, 'bold' => $allowBold]);
                     }
                 }
@@ -1201,6 +1285,7 @@ class RenjaDocumentController extends Controller
      */
     private function getEffectiveOpdIdForUser($user): int
     {
+        abort_if($user->isOperator() && !$user->opd_id, 403, 'Akun belum ditautkan ke OPD.');
         if ($user->opd_id) {
             return $user->opd_id;
         }
@@ -1221,10 +1306,7 @@ class RenjaDocumentController extends Controller
      */
     private function authorizeDocumentAccess(RenjaDocument $document): void
     {
-        $user = Auth::user();
-        if ($user && $user->isOperator() && (int)$document->opd_id !== (int)$user->opd_id) {
-            abort(403, 'Akses Ditolak: Anda hanya berhak mengelola dokumen Renja milik OPD sendiri.');
-        }
+        $this->authorize('view', $document);
     }
 
     /**
@@ -1237,7 +1319,7 @@ class RenjaDocumentController extends Controller
         ]);
 
         $document = RenjaDocument::findOrFail($id);
-        $this->authorizeDocumentAccess($document);
+        $this->authorize('update', $document);
 
         $newTitle = trim($request->input('nama_dokumen'));
 
@@ -1328,4 +1410,11 @@ class RenjaDocumentController extends Controller
 
         return "{$filename}.{$extension}";
     }
+    public function updateStatus(Request $request, $id)
+    {
+        $data = $request->validate(['status' => ['required', 'in:approved,disetujui,revision,revisi,perlu_revisi'], 'catatan_bapperida' => ['nullable', 'string']]);
+        $request->merge(['decision' => in_array($data['status'], ['approved', 'disetujui']) ? 'disetujui' : 'revisi']);
+        return app(AdminController::class)->processDecision($request, $id);
+    }
+
 }

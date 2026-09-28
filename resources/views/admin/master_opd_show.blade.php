@@ -6,32 +6,7 @@
 <div class="max-w-7xl mx-auto space-y-6">
 
     <!-- HEADER / BREADCRUMB BANNER -->
-    <div class="st-card-v2 p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-l-4 border-l-amber-500">
-        <div>
-            <div class="flex items-center space-x-2 text-[11px] font-bold uppercase text-slate-400 mb-1">
-                <a href="{{ route('admin.master_opd.index') }}" class="hover:text-amber-600 transition">Perangkat Daerah</a>
-                <span>/</span>
-                <span class="text-slate-700 font-extrabold">Detail OPD</span>
-            </div>
-            <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                <i class="fa-solid fa-landmark text-amber-500 text-lg"></i>
-                <span>{{ $opd->nama_opd }}</span>
-            </h1>
-            <p class="text-xs text-slate-500 font-medium mt-1">Kode OPD: <strong class="font-mono text-slate-800">{{ $opd->kode_opd }}</strong> • Nomor Lampiran: <strong class="text-amber-600">{{ $opd->nomor_lampiran_romawi ?? 'LAMPIRAN I' }}</strong></p>
-        </div>
-
-        <div class="flex items-center space-x-2 shrink-0">
-            <a href="{{ route('admin.monitoring-opd.show', $opd->id) }}" class="st-btn bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-xs transition flex items-center gap-1.5">
-                <i class="fa-solid fa-chart-line text-xs"></i>
-                <span>Monitoring Progres Dokumen</span>
-            </a>
-
-            <a href="{{ route('admin.master_opd.index') }}" class="st-btn st-btn-secondary st-btn-sm text-xs font-bold rounded-xl">
-                <i class="fa-solid fa-arrow-left text-xs"></i>
-                <span>Kembali</span>
-            </a>
-        </div>
-    </div>
+    <x-ui.page-heading :title="$opd->nama_opd" :description="'Kode OPD: '.$opd->kode_opd.' · Informasi perangkat daerah dan akun pengguna terdaftar.'" eyebrow="OPD & Pengguna"><x-slot:actions><a href="{{ route('admin.monitoring-opd.show', $opd->id) }}" class="st-btn st-btn-primary">Monitoring Dokumen</a><a href="{{ route('admin.master_opd.index') }}" class="st-btn st-btn-secondary">Kembali</a></x-slot:actions></x-ui.page-heading>
 
     <!-- PROFIL OPD & OPERATOR INFO CARDS -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -120,7 +95,7 @@
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
                         <div>
                             <div class="flex items-center space-x-2">
-                                <span class="px-2.5 py-0.5 rounded-lg text-[10px] font-black bg-slate-900 text-amber-400 font-mono">
+                                <span class="px-2.5 py-0.5 rounded-lg text-[10px] font-black bg-blue-50 text-blue-600 font-mono">
                                     TA {{ $doc->tahun_anggaran }}
                                 </span>
                                 <h4 class="text-sm font-black text-slate-900">{{ $doc->jenis_dokumen }}</h4>
@@ -132,9 +107,7 @@
                         </div>
 
                         <div class="flex items-center space-x-2 self-start sm:self-auto shrink-0">
-                            <span class="{{ $doc->status_badge_class }} px-3 py-1 rounded-xl text-xs font-extrabold uppercase shadow-2xs">
-                                {{ $doc->status_label }}
-                            </span>
+                            <x-ui.status-badge :status="$doc->status" :label="$doc->status_label" />
 
                             @if(in_array($doc->status, ['submitted', 'menunggu_pemeriksaan', 'menunggu_verifikasi', 'sedang_diperiksa', 'dikirim_ulang']))
                                 <a href="{{ route('admin.verifikasi.review', $doc->id) }}" class="st-btn bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs px-3.5 py-1.5 rounded-xl shadow-xs transition">

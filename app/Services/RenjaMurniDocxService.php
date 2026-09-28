@@ -26,6 +26,10 @@ class RenjaMurniDocxService
      */
     public function importDocx($file, int $opdId, int $tahunAnggaran, string $jenisDokumen = 'RENJA Murni', ?RenjaDocument $existingDocument = null): RenjaDocument
     {
+        if ($existingDocument) {
+            abort_if($existingDocument->isLocked() || !$existingDocument->isEditableByOpd(), 403, 'Dokumen tidak dapat diganti.');
+            abort_unless((int) $existingDocument->opd_id === $opdId && (int) $existingDocument->tahun_anggaran === $tahunAnggaran && $existingDocument->jenis_dokumen === $jenisDokumen, 422, 'Dokumen pengganti harus memiliki OPD, tahun, dan jenis yang sama.');
+        }
         $this->templateService->ensureStandardTemplatesSeeded();
         
         $templateCode = 'RENJA_MURNI';
@@ -236,10 +240,14 @@ class RenjaMurniDocxService
                 // Python zipfile fallback (Fail-safe universal if PHP ZipArchive is not installed)
                 try {
                     $pythonBinary = env('PYTHON_BINARY_PATH', 'python');
-                    $normPath = str_replace('\\', '/', $filePath);
-                    $pyScript = "import zipfile, sys; z=zipfile.ZipFile('{$normPath}'); sys.stdout.buffer.write(z.read('word/document.xml'))";
-                    $redirectNull = DIRECTORY_SEPARATOR === '\\' ? '2>nul' : '2>/dev/null';
-                    $xmlContent = @shell_exec("{$pythonBinary} -c \"{$pyScript}\" {$redirectNull}");
+                    $process = new \Symfony\Component\Process\Process([
+                        $pythonBinary, '-c',
+                        'import zipfile,sys; z=zipfile.ZipFile(sys.argv[1]); sys.stdout.buffer.write(z.read("word/document.xml"))',
+                        $filePath,
+                    ]);
+                    $process->setTimeout(30);
+                    $process->mustRun();
+                    $xmlContent = $process->getOutput();
                 } catch (\Throwable $e) {
                     // Fallback
                 }
@@ -252,9 +260,18 @@ class RenjaMurniDocxService
 
         // Parse XML menggunakan DOMDocument & XPath
         $dom = new DOMDocument();
-        libxml_use_internal_errors(true);
-        $dom->loadXML($xmlContent, LIBXML_NOENT | LIBXML_XINCLUDE | LIBXML_NOERROR | LIBXML_NOWARNING);
-        libxml_clear_errors();
+        if (preg_match('/<!DOCTYPE|<!ENTITY/i', $xmlContent)) {
+            throw new \RuntimeException('DOCX dengan deklarasi entity/DTD tidak diizinkan.');
+        }
+        $previousErrors = libxml_use_internal_errors(true);
+        try {
+            if (!$dom->loadXML($xmlContent, LIBXML_NONET | LIBXML_NOERROR | LIBXML_NOWARNING)) {
+                throw new \RuntimeException('Struktur XML DOCX tidak valid.');
+            }
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previousErrors);
+        }
 
         $xpath = new DOMXPath($dom);
         $xpath->registerNamespace('w', 'http://schemas.openxmlformats.org/wordprocessingml/2006/main');

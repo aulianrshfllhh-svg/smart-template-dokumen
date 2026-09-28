@@ -113,7 +113,7 @@ class TemplateRenjaE2EHardeningTest extends TestCase
         return $zipPath;
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function test_1_full_operator_to_admin_workflow_for_renja_murni()
     {
         // 1. Operator opens Workspace
@@ -204,7 +204,7 @@ class TemplateRenjaE2EHardeningTest extends TestCase
         @unlink($docxPath);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function test_2_full_operator_to_admin_workflow_for_renja_perubahan()
     {
         // 1. Download template RENJA_PERUBAHAN
@@ -255,7 +255,7 @@ class TemplateRenjaE2EHardeningTest extends TestCase
         @unlink($docxPath);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function test_3_content_preservation_across_all_chapters_without_loss()
     {
         $xmlContent = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' .
@@ -316,7 +316,7 @@ class TemplateRenjaE2EHardeningTest extends TestCase
         @unlink($docxPath);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function test_4_table_data_preservation_with_exact_values()
     {
         $xmlContent = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' .
@@ -364,7 +364,7 @@ class TemplateRenjaE2EHardeningTest extends TestCase
         @unlink($docxPath);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function test_5_opd_isolation_and_idor_protection()
     {
         // Operator Dinkes tries to upload by passing Disdik's opd_id in payload
@@ -393,7 +393,7 @@ class TemplateRenjaE2EHardeningTest extends TestCase
         @unlink($docxPath);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function test_6_revision_workflow_perlu_revisi()
     {
         // 1. Create and submit document
@@ -421,7 +421,7 @@ class TemplateRenjaE2EHardeningTest extends TestCase
         $workspaceRes->assertStatus(200);
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function test_7_error_handling_for_non_docx_file()
     {
         $txtFile = UploadedFile::fake()->create('document.txt', 100, 'text/plain');
@@ -435,7 +435,7 @@ class TemplateRenjaE2EHardeningTest extends TestCase
         $resTxt->assertSessionHas('error');
     }
 
-    /** @test */
+    #[\PHPUnit\Framework\Attributes\Test]
     public function test_8_error_handling_for_corrupt_docx_file_uses_resilient_fallback()
     {
         $tmpFile = tempnam(sys_get_temp_dir(), 'corrupt_') . '.docx';
